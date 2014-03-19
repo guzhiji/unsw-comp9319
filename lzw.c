@@ -144,6 +144,8 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
         } else { // unknown
 
             if (buf->length) {
+                int code;
+
                 // buf is not empty
                 // which means that buf + c is a string
                 // not a single char
@@ -156,7 +158,7 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
                 fputc(prev_code, fout);
 
                 // save the hashed new string with the next code
-                int code = next_code++;
+                code = next_code++;
                 hashtable_put(ht, h, &code);
 
                 // reset the string/buf
@@ -195,9 +197,10 @@ int lzw_csize(FILE * fp, unsigned short w) {
     lzw_string * buf = lzw_string_init();
 
     while ((c = fgetc(fp)) != EOF) {
+        lzw_string * hts;
 
         lzw_string_append(buf, c);
-        lzw_string * hts = hashtable_get(ht, buf->hash_code);
+        hts = hashtable_get(ht, buf->hash_code);
         if (hts == NULL || !lzw_string_equals(buf, hts)) { // unknown
 
             if (buf->length > 1) {
