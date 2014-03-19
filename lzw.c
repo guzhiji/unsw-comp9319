@@ -81,11 +81,24 @@ int lzw_string_append(lzw_string * s, int c) {
 
 }
 
+int lzw_string_equals(lzw_string * s1, lzw_string * s2) {
+    lzw_char * c1 = s1->head;
+    lzw_char * c2 = s2->head;
+    while (c1 != NULL && c2 != NULL) {
+        if (c1->data != c2->data) return 0;
+        c1 = c1->next;
+        c2 = c2->next;
+    }
+    if (c1 == NULL && c2 == NULL) return 1;
+    return 0;
+}
+
 void lzw_string_print(lzw_string * s, FILE * fp) {
 
     lzw_char * cc = s->head;
     while (cc != NULL) {
         fputc(cc->data, fp);
+        //fprintf(fp, "%d", cc->data);
         cc = cc->next;
     }
 
@@ -135,23 +148,21 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
                 // which means that buf + c is a string
                 // not a single char
 
-                int code = next_code++;
-                // save the hashed new string with the next code
-                hashtable_put(ht, h, &code);
-
-                // reset the string
-                lzw_string_free(buf);
-                buf = lzw_string_init();
-
-            }
-
-            if (prev_code) {
                 // for the first char,
                 // there not previous one
 
                 // output code for the old string or char
                 // TODO: in symbol.c
                 fputc(prev_code, fout);
+
+                // save the hashed new string with the next code
+                int code = next_code++;
+                hashtable_put(ht, h, &code);
+
+                // reset the string/buf
+                // it's not necessary when buf->length==0
+                lzw_string_free(buf);
+                buf = lzw_string_init();
 
             }
 
@@ -165,6 +176,12 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
 
     }
 
+    if (prev_code) {
+        // TODO: the last code for buf
+        fputc(prev_code, fout);
+        // TODO: flush
+    }
+
     hashtable_free(ht);
     lzw_string_free(buf);
 
@@ -174,49 +191,54 @@ int lzw_csize(FILE * fp, unsigned short w) {
 
     int c;
     int s = 0; // size in bits
-    lzw_string * buf = lzw_string_init();
     hashtable * ht = hashtable_init();
+    lzw_string * buf = lzw_string_init();
 
     while ((c = fgetc(fp)) != EOF) {
 
-        // test if the new string is known
-        int h = lzw_string_hashnew(buf, c);
-        if (hashtable_get(ht, h) == NULL) { // unknown
+        lzw_string_append(buf, c);
+        lzw_string * hts = hashtable_get(ht, buf->hash_code);
+        if (hts == NULL || !lzw_string_equals(buf, hts)) { // unknown
 
-            if (buf->length) {
+            if (buf->length > 1) {
+
                 // buf + c is not a single char
-
                 // save the hashed new string
-                hashtable_put(ht, h, &c);
+                hashtable_put(ht, buf->hash_code, buf);
+
+            }
+
+            if (buf->length > 0) {
 
                 // reset the string
-                lzw_string_free(buf);
+                // release buf when it's not stored in hashtable
+                if (buf->length == 1)
+                    lzw_string_free(buf);
                 buf = lzw_string_init();
+
             }
+            // otherwise
+            // buf->length == 0
+            // there is no need to reset the string/buf
 
             // instead of outputing a symbol
             // s counts bits
             // NOTE:
             // when the first char comes,
             // nothing is in buf to be added here
-            // but, for the last char, EOF pre-maturely 
+            // but, for the last char, EOF pre-maturely
             // stops the loop before adding the last code
-            // in all, just add w here though it doesn't 
+            // in all, just add w here though it doesn't
             // logically make sense
             s += w;
-            lzw_string_append(buf, c);
-            // since buf is cleared, 
-            // h is no longer valid
+            lzw_string_append(buf, c); // since buf's been cleared
 
-        } else {
-            // append the new char to string
-            _lzw_string_append(buf, c, h);
         }
 
     }
 
-    hashtable_free(ht);
     lzw_string_free(buf);
+    hashtable_free(ht);
 
     if (s % 8 > 0)
         return s / 8 + 1;

@@ -27,6 +27,7 @@ lzw_string * lzw_string_init();
 int lzw_string_hash(lzw_string * s);
 int lzw_string_hashnew(lzw_string * s, int c);
 int lzw_string_append(lzw_string * s, int c);
+int lzw_string_equals(lzw_string * s1, lzw_string * s2);
 void lzw_string_print(lzw_string * s, FILE * fp);
 void lzw_string_free(lzw_string * s);
 

@@ -116,6 +116,7 @@ void _constructtree(huffman_node * firstnode) {
         n2 = huffman_pq_pop(pqueue);
     }
 
+    free(pqueue);
 /*
     if (n1 == NULL) {
         // nothing in the tree
@@ -141,7 +142,7 @@ int _csize(huffman_node * first) {
     cn = first;
     while (cn != NULL) {
 
-        l = 1;
+        l = 0;
         n = cn->parent;
         while (n != NULL) {
             l++;

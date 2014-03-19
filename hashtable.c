@@ -30,6 +30,7 @@ void hashtable_free(hashtable * t) {
                 //     printf("i=%d,k=%d,v=%d\n", i, cur->key, cur->data);
                 p = cur;
                 cur = cur->next;
+                free(p->data);
                 free(p);
             }
             // if (cur->key != 0)

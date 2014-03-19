@@ -6,11 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include "huffman.h"
+#include "huffman.h"
 #include "lzw.h"
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 
 /*
     FILE * fp = fopen("file3.txt", "rb");
@@ -21,7 +20,6 @@ int main(int argc, char **argv)
 
     fclose(fp);
 */
-
     FILE * fp = fopen("file1.txt", "rb");
 
     if (!fp) return 1;
@@ -29,14 +27,15 @@ int main(int argc, char **argv)
     printf("%d", lzw_csize(fp, 9));
 
     fclose(fp);
+
 /*
-    FILE * fp = fopen("data.txt", "r");
-    FILE * fout = fopen("data.lzw", "w");
+    FILE * fp = fopen("file1.txt", "r");
+    FILE * fout = fopen("file1.lzw", "w");
 
     if (!fp) return 1;
     if (!fout) return 2;
 
-    lzw_compress(fp, fout, (unsigned short)12);
+    lzw_compress(fp, fout, 9);
     //printf("%d", lzw_csize(fp, 12));
 
     fclose(fout);
@@ -52,17 +51,30 @@ int main(int argc, char **argv)
     */
 
     /*
-    printf("\n");
 
-    fp = fopen("data.txt", "r, ccs=UTF-8");
-    if (!fp) return 1;
+    FILE * fp;
 
-    wint_t wc;
-    do {
-        wc = fgetwc(fp);
-        printf("wc=%04X ", wc);
-    } while (wc != WEOF);
-    fclose(fp);
+    if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 'h') {
+
+        fp = fopen(argv[2], "rb");
+        if (!fp) return 1;
+        printf("%d\n", huffman_csize(fp));
+        fclose(fp);
+
+    } else if (argc > 3 && argv[1][0] == '-' && argv[1][1] == 'l') {
+
+        int w = atoi(argv[2]);
+        if (w > 8 && w < 21) {
+            // between 9 and 20
+
+            fp = fopen(argv[3], "rb");
+            if (!fp) return 1;
+            printf("%d\n", lzw_csize(fp, w));
+            fclose(fp);
+
+        }
+
+    }
     */
 
     return 0;
