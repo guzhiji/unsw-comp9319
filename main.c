@@ -11,21 +11,51 @@
 
 int main(int argc, char **argv) {
 
-/*
-    FILE * fp = fopen("file3.txt", "rb");
+    FILE * fp;
 
+    fp = fopen("file1.txt", "rb");
     if (!fp) return 1;
-
-    printf("%d", huffman_csize(fp));
-
+    printf("%d\n", huffman_csize(fp));
     fclose(fp);
-*/
-    FILE * fp = fopen("file1.txt", "rb");
 
+    fp = fopen("file1.txt", "rb");
     if (!fp) return 1;
+    printf("%d\n", lzw_csize(fp, 9));
+    fclose(fp);
 
-    printf("%d", lzw_csize(fp, 9));
+    fp = fopen("file1.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", lzw_csize(fp, 20));
+    fclose(fp);
 
+    fp = fopen("file2.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", huffman_csize(fp));
+    fclose(fp);
+
+    fp = fopen("file2.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", lzw_csize(fp, 9));
+    fclose(fp);
+
+    fp = fopen("file2.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", lzw_csize(fp, 10));
+    fclose(fp);
+
+    fp = fopen("file3.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", huffman_csize(fp));
+    fclose(fp);
+
+    fp = fopen("file3.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", lzw_csize(fp, 9));
+    fclose(fp);
+
+    fp = fopen("file3.txt", "rb");
+    if (!fp) return 1;
+    printf("%d\n", lzw_csize(fp, 15));
     fclose(fp);
 
 /*
