@@ -5,5 +5,6 @@
 #include <stdio.h>
 
 int getsymbol(FILE * fp, unsigned short w);
+void putsymbol(FILE * fp, int c, unsigned short w);
 
 #endif

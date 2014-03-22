@@ -50,11 +50,15 @@ huffman_node * _getallsymbols(FILE * fp, hashtable * stats) {
 
     while ((c = fgetc(fp)) != EOF) {
 
-        cn = (huffman_node *) hashtable_get(stats, c);
+        cn = (huffman_node *) hashtable_get(stats, &c);
         if (cn != NULL) { // a known char
+
             cn->freq++;
 
         } else { // an unknown char
+
+            int * symbol = (int *) malloc(sizeof(int));
+            *symbol = c;
 
             cn = (huffman_node *) malloc(sizeof(huffman_node));
             cn->symbol = c;
@@ -71,7 +75,7 @@ huffman_node * _getallsymbols(FILE * fp, hashtable * stats) {
                 pn = cn;
             }
 
-            hashtable_put(stats, c, cn);
+            hashtable_put(stats, symbol, cn);
         }
 
     }
@@ -164,9 +168,14 @@ int huffman_csize(FILE * fp) {
     int s;
     huffman_node * first;
     hashtable * ht = hashtable_init();
+
+    hashtable_setcompfunc(hashtable_comp_int);
+    hashtable_sethashfunc(hashtable_hash_int);
+
     first = _getallsymbols(fp, ht);
     _constructtree(first);
     s = _csize(first);
+
     hashtable_free(ht);
 
     if (s % 8 > 0)

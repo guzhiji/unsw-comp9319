@@ -1,6 +1,18 @@
 
 #include "hashtable.h"
 
+unsigned int (*_hashtable_hash)(void * k);
+
+void hashtable_sethashfunc(unsigned int (*h)(void *)) {
+    _hashtable_hash = h;
+}
+
+int (*_hashtable_comp)(void * k1, void * k2);
+
+void hashtable_setcompfunc(int (*c)(void *, void *)) {
+    _hashtable_comp = c;
+}
+
 hashtable * hashtable_init() {
     hashtable * t;
     int i;
@@ -18,36 +30,35 @@ void hashtable_free(hashtable * t) {
 
     int i;
 
-    // printf("size=%d\n", t->size);
-
     for (i = 0; i < _TABLE_SIZE_; i++) {
         if (t->_table[i] != NULL) {
             hashtable_value * cur;
             hashtable_value * p;
             cur = t->_table[i];
             while (cur->next != NULL) {
-                // if (cur->key != 0)
-                //     printf("i=%d,k=%d,v=%d\n", i, cur->key, cur->data);
                 p = cur;
                 cur = cur->next;
-                free(p->data);
+                if (p->key == p->data) {
+                    free(p->data);
+                } else {
+                    free(p->key);
+                    free(p->data);
+                }
                 free(p);
             }
-            // if (cur->key != 0)
-            //     printf("i=%d,k=%d,v=%d\n", i, cur->key, cur->data);
             free(cur);
         }
     }
     free(t->_table);
     free(t);
+
 }
 
-int hashtable_hash(unsigned int k) {
-    // return abs(k) % _TABLE_SIZE_;
-    return k % _TABLE_SIZE_;
+unsigned int hashtable_hash(void * k) {
+    return _hashtable_hash(k) % _TABLE_SIZE_;
 }
 
-void hashtable_put(hashtable * t, int k, void * v) {
+void hashtable_put(hashtable * t, void * k, void * v) {
 
     hashtable_value * val = (hashtable_value *) malloc(sizeof(hashtable_value));
     int idx = hashtable_hash(k);
@@ -68,7 +79,8 @@ void hashtable_put(hashtable * t, int k, void * v) {
 
 }
 
-void * hashtable_get(hashtable * t, int k) {
+void * hashtable_get(hashtable * t, void * k) {
+
     int idx = hashtable_hash(k);
     if (t->_table[idx] == NULL) {
         return NULL; // not found
@@ -76,10 +88,19 @@ void * hashtable_get(hashtable * t, int k) {
         hashtable_value * cur;
         cur = t->_table[idx];
         do {
-            if (cur->key == k)
+            if (_hashtable_comp(cur->key, k))
                 return cur->data;
             cur = cur->next;
         } while (cur != NULL);
         return NULL; // not found
     }
+
+}
+
+unsigned int hashtable_hash_int(void * k) {
+    return * (int *) k;
+}
+
+int hashtable_comp_int(void * k1, void * k2) {
+    return (* (int *) k1) == (* (int *) k2);
 }

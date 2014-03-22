@@ -3,9 +3,6 @@
 
 // lzw_string: linked-list-based string
 
-/**
- * initialize a string
- */
 lzw_string * lzw_string_init() {
 
     lzw_string * s = (lzw_string *) malloc(sizeof(lzw_string));
@@ -17,10 +14,6 @@ lzw_string * lzw_string_init() {
 
 }
 
-/**
- * hash a string
- * the algorithm is based on Java's String hashCode() implementation
- */
 int lzw_string_hash(lzw_string * s) {
 
     int h = 0;
@@ -35,9 +28,6 @@ int lzw_string_hash(lzw_string * s) {
 
 }
 
-/**
- * re-hash a string and a potential appending char
- */
 int lzw_string_hashnew(lzw_string * s, int c) {
 
     // return lzw_string_hash(s) * 31 + c;
@@ -69,9 +59,6 @@ void _lzw_string_append(lzw_string * s, int c, int h) {
 
 }
 
-/**
- * append a char to a string
- */
 int lzw_string_append(lzw_string * s, int c) {
 
     int h = lzw_string_hashnew(s, c);
@@ -104,9 +91,6 @@ void lzw_string_print(lzw_string * s, FILE * fp) {
 
 }
 
-/**
- * release memory for a string
- */
 void lzw_string_free(lzw_string * s) {
 
     // free chars
@@ -123,6 +107,14 @@ void lzw_string_free(lzw_string * s) {
 
 }
 
+unsigned int hashtable_hash_lzwstring(void * k) {
+    return ((lzw_string *) k)->hash_code;
+}
+
+int hashtable_comp_lzwstring(void * k1, void * k2) {
+    return lzw_string_equals((lzw_string *) k1, (lzw_string *) k2);
+}
+
 void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
 
     int c;
@@ -131,11 +123,14 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
     lzw_string * buf = lzw_string_init();
     hashtable * ht = hashtable_init();
 
+    hashtable_setcompfunc(hashtable_comp_lzwstring);
+    hashtable_sethashfunc(hashtable_hash_lzwstring);
+
     while ((c = fgetc(fin)) != EOF) {
 
         // test if the new string is known
         int h = lzw_string_hashnew(buf, c);
-        int * cp = hashtable_get(ht, h);
+        int * cp = hashtable_get(ht, &h);
         if (cp != NULL) { // known
 
             prev_code = *cp;
@@ -159,7 +154,7 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
 
                 // save the hashed new string with the next code
                 code = next_code++;
-                hashtable_put(ht, h, &code);
+                hashtable_put(ht, &h, &code);
 
                 // reset the string/buf
                 // it's not necessary when buf->length==0
@@ -196,18 +191,22 @@ int lzw_csize(FILE * fp, unsigned short w) {
     hashtable * ht = hashtable_init();
     lzw_string * buf = lzw_string_init();
 
+    hashtable_setcompfunc(hashtable_comp_lzwstring);
+    hashtable_sethashfunc(hashtable_hash_lzwstring);
+
     while ((c = fgetc(fp)) != EOF) {
         lzw_string * hts;
 
         lzw_string_append(buf, c);
-        hts = hashtable_get(ht, buf->hash_code);
-        if (hts == NULL || !lzw_string_equals(buf, hts)) { // unknown
+        hts = hashtable_get(ht, buf);
+        // hashtable has been upgraded and there is no need to call equals() here
+        if (hts == NULL /* || !lzw_string_equals(buf, hts) */) { // unknown
 
             if (buf->length > 1) {
 
                 // buf + c is not a single char
                 // save the hashed new string
-                hashtable_put(ht, buf->hash_code, buf);
+                hashtable_put(ht, buf, buf);
 
             }
 
