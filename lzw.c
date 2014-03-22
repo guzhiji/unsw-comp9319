@@ -190,12 +190,13 @@ int lzw_csize(FILE * fp, unsigned short w) {
     int s = 0; // size in bits
     hashtable * ht = hashtable_init();
     lzw_string * buf = lzw_string_init();
+    lzw_string * hts;
 
+    // setup hashtable custom functions
     hashtable_setcompfunc(hashtable_comp_lzwstring);
     hashtable_sethashfunc(hashtable_hash_lzwstring);
 
     while ((c = fgetc(fp)) != EOF) {
-        lzw_string * hts;
 
         lzw_string_append(buf, c);
         hts = hashtable_get(ht, buf);
@@ -242,6 +243,7 @@ int lzw_csize(FILE * fp, unsigned short w) {
     lzw_string_free(buf);
     hashtable_free(ht);
 
+    // bits to bytes
     if (s % 8 > 0)
         return s / 8 + 1;
     return s / 8;

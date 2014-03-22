@@ -63,8 +63,4 @@ void hashtable_sethashfunc(unsigned int (*h)(void *));
  */
 void hashtable_setcompfunc(int (*c)(void *, void *));
 
-unsigned int hashtable_hash_int(void * k);
-
-int hashtable_comp_int(void * k1, void * k2);
-
 #endif

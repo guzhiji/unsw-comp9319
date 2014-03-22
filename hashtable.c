@@ -72,7 +72,7 @@ void hashtable_put(hashtable * t, void * k, void * v) {
         hashtable_value * cur;
         cur = t->_table[idx];
         while (cur->next != NULL)
-            cur = cur->next;
+            cur = cur->next; // for simplicity, there is no duplication prevention
         cur->next = val;
     }
     t->size++;
@@ -97,10 +97,3 @@ void * hashtable_get(hashtable * t, void * k) {
 
 }
 
-unsigned int hashtable_hash_int(void * k) {
-    return * (int *) k;
-}
-
-int hashtable_comp_int(void * k1, void * k2) {
-    return (* (int *) k1) == (* (int *) k2);
-}

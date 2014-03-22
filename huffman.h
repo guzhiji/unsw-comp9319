@@ -31,12 +31,12 @@ typedef struct {
 void huffman_pq_push(huffman_pqueue * pq, huffman_node * n);
 
 /**
- * pop a Huffman node from a priority queue
+ * pop the least frequent Huffman node from a priority queue
  */
 huffman_node * huffman_pq_pop(huffman_pqueue * pq);
 
 /**
- * calculate Huffman compression size
+ * calculate Huffman compression size in bytes
  */
 int huffman_csize(FILE * fp);
 
