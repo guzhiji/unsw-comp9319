@@ -54,12 +54,12 @@ void hashtable_put(hashtable * t, void * k, void * v);
 void * hashtable_get(hashtable * t, void * k);
 
 /**
- * set a function for hashing keys
+ * set a custom function for hashing keys
  */
 void hashtable_sethashfunc(unsigned int (*h)(void *));
 
 /**
- * set a function for comparing keys equal or not
+ * set a custom function for comparing keys equal or not
  */
 void hashtable_setcompfunc(int (*c)(void *, void *));
 

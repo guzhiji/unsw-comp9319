@@ -231,10 +231,23 @@ int _csize(huffman_node * first) {
 
 }
 
+/**
+ * custom function to accept integer for hashing
+ *
+ * @param int *             pointer to an int key
+ * @return unsigned int     value of the int as a hash key
+ */
 unsigned int hashtable_hash_int(void * k) {
     return * (int *) k;
 }
 
+/**
+ * custom function to accept integers for comparison
+ *
+ * @param int *     pointer to an int key
+ * @param int *     pointer to an int key
+ * @return int      1 for equal; 0 for inequal
+ */
 int hashtable_comp_int(void * k1, void * k2) {
     return (* (int *) k1) == (* (int *) k2);
 }

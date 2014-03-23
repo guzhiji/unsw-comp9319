@@ -1,8 +1,6 @@
 
 #include "lzw.h"
 
-// lzw_string: linked-list-based string
-
 lzw_string * lzw_string_init() {
 
     lzw_string * s = (lzw_string *) malloc(sizeof(lzw_string));
@@ -37,6 +35,10 @@ int lzw_string_hashnew(lzw_string * s, int c) {
 
 /**
  * append a char to a string with a pre-determined hash code
+ *
+ * @param lzw_string * s    string to which the character is appended
+ * @param int c             the new character
+ * @param int h             the pre-determined hash code
  */
 void _lzw_string_append(lzw_string * s, int c, int h) {
 
@@ -61,8 +63,8 @@ void _lzw_string_append(lzw_string * s, int c, int h) {
 
 int lzw_string_append(lzw_string * s, int c) {
 
-    int h = lzw_string_hashnew(s, c);
-    _lzw_string_append(s, c, h);
+    int h = lzw_string_hashnew(s, c); // hash before append
+    _lzw_string_append(s, c, h); // append using a known hash
 
     return h;
 
@@ -107,10 +109,23 @@ void lzw_string_free(lzw_string * s) {
 
 }
 
+/**
+ * custom function for hashing a LZW string
+ *
+ * @param lzw_string *      pointer to a string key
+ * @return unsigned int     hash code of the string
+ */
 unsigned int hashtable_hash_lzwstring(void * k) {
     return ((lzw_string *) k)->hash_code;
 }
 
+/**
+ * custom function for comparing two LZW strings
+ *
+ * @param lzw_string *      pointer to a string key
+ * @param lzw_string *      pointer to a string key
+ * @return int              1 for equal; 0 for inequal
+ */
 int hashtable_comp_lzwstring(void * k1, void * k2) {
     return lzw_string_equals((lzw_string *) k1, (lzw_string *) k2);
 }
