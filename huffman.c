@@ -3,29 +3,31 @@
 
 void huffman_pq_push(huffman_pqueue * pq, huffman_node * n) {
 
-    if (pq->head == NULL) {
-        // the first node
+    huffman_node * pn; // previous node
+    huffman_node * cn; // current node
+
+    pn = NULL; // head is supposed to be the lowest
+    cn = pq->head;
+    while (cn != NULL && n->freq > cn->freq) {
+        pn = cn;
+        cn = cn->higher;
+    }
+    // if cn is NULL, pn is the last, so n is appended at the end
+    // if n is less frequent than cn, n is before cn,
+    // and of course after pn
+    // but, if pn is NULL, n is the first for the queue can be empty,
+    // or n can be less frequent than the first
+
+    if (pn == NULL) {
+        // n lower than head, or head can be nothing
+        n->higher = pq->head;
         pq->head = n;
     } else {
-
-        huffman_node * pn; // previous node
-        huffman_node * cn; // current node
-
-        pn = pq->head; // head is supposed to be the lowest
-        cn = pq->head->higher;
-        while (cn != NULL && n->freq > cn->freq) {
-            pn = cn;
-            cn = cn->higher;
-        }
-        // if cn is NULL, pn is the last, so n is appended at the end
-        // if n is less frequent than cn, n is before cn,
-        // and of course after pn
-
         pn->higher = n; // n is after pn
         n->higher = cn; // n is before cn
         // so n is inserted between cn and pn, if cn is not NULL
-
     }
+
 }
 
 huffman_node * huffman_pq_pop(huffman_pqueue * pq) {

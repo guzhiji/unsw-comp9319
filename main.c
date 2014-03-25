@@ -10,7 +10,7 @@
 #include "lzw.h"
 
 int main(int argc, char **argv) {
-
+/*
     FILE * fp;
 
     fp = fopen("file1.txt", "rb");
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     if (!fp) return 1;
     printf("%d\n", lzw_csize(fp, 15));
     fclose(fp);
-
+*/
 /*
     FILE * fp = fopen("file1.txt", "r");
     FILE * fout = fopen("file1.lzw", "w");
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
     fclose(fp);
     */
 
-    /*
+
 
     FILE * fp;
 
@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
         }
 
     }
-    */
+
 
     return 0;
 }
