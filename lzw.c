@@ -136,7 +136,7 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
     int next_code = 256;
     int prev_code = 0;
     lzw_string * buf = lzw_string_init();
-    hashtable * ht = hashtable_init();
+    hashtable * ht = hashtable_init(5021);
 
     hashtable_setcompfunc(hashtable_comp_lzwstring);
     hashtable_sethashfunc(hashtable_hash_lzwstring);
@@ -203,7 +203,7 @@ int lzw_csize(FILE * fp, unsigned short w) {
 
     int c;
     int s = 0; // size in bits
-    hashtable * ht = hashtable_init();
+    hashtable * ht = hashtable_init(5021);
     lzw_string * buf = lzw_string_init();
     lzw_string * hts;
 

@@ -5,10 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifndef _TABLE_SIZE_
-#define _TABLE_SIZE_ 5021
-#endif
-
 /**
  * DATA TYPE: a key-value pair in a hashtable
  */
@@ -16,6 +12,7 @@ typedef struct _hashtable_value hashtable_value;
 
 struct _hashtable_value {
     hashtable_value * next;
+    hashtable_value * last;
     void * key;
     void * data;
 };
@@ -24,14 +21,15 @@ struct _hashtable_value {
  * DATA TYPE: hashtable
  */
 typedef struct {
-    hashtable_value ** _table;
+    hashtable_value * _table;
     unsigned int size;
+    unsigned int table_size;
 } hashtable;
 
 /**
  * initialize a hashtable
  */
-hashtable * hashtable_init();
+hashtable * hashtable_init(const unsigned int tblsize);
 
 /**
  * release all resources used by a hashtable
@@ -41,7 +39,7 @@ void hashtable_free(hashtable * t);
 /**
  * hash a key
  */
-unsigned int hashtable_hash(void * k);
+unsigned int hashtable_hash(void * k, const unsigned int tblsize);
 
 /**
  * put a key-value pair into the hashtable
@@ -64,3 +62,4 @@ void hashtable_sethashfunc(unsigned int (*h)(void *));
 void hashtable_setcompfunc(int (*c)(void *, void *));
 
 #endif
+

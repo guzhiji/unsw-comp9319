@@ -260,7 +260,7 @@ int huffman_csize(FILE * fp) {
     huffman_node * firstsymbol;
     huffman_node * firstparent;
     huffman_node * tmp;
-    hashtable * ht = hashtable_init();
+    hashtable * ht = hashtable_init(5021);
 
     // setup hashtable custom functions
     hashtable_setcompfunc(hashtable_comp_int);
@@ -282,7 +282,7 @@ int huffman_csize(FILE * fp) {
         free(tmp);
     }
 
-    // release leaf nodes/symbol nodes, 
+    // release leaf nodes/symbol nodes,
     // since they are in the hashtable storage
     hashtable_free(ht);
 

@@ -19,36 +19,34 @@ void hashtable_setcompfunc(int (*c)(void *, void *)) {
     _hashtable_comp = c;
 }
 
-hashtable * hashtable_init() {
+hashtable * hashtable_init(const unsigned int tblsize) {
     hashtable * t;
-    int i;
 
     t = (hashtable *) malloc(sizeof(hashtable));
-    t->_table = (hashtable_value **) malloc(sizeof(hashtable_value *) * _TABLE_SIZE_);
+    t->_table = (hashtable_value *) calloc(tblsize, sizeof(hashtable_value));
     t->size = 0;
-    for (i = 0; i < _TABLE_SIZE_; i++)
-        t->_table[i] = NULL;
+    t->table_size = tblsize;
 
     return t;
 }
 
 void hashtable_free(hashtable * t) {
 
-    int i;
-    for (i = 0; i < _TABLE_SIZE_; i++) {
-        if (t->_table[i] != NULL) {
-            // at least one pair in the bucket
-            hashtable_value * cur; // current pair
-            hashtable_value * p; // previous pair
-            cur = t->_table[i]; // the first pair
-            while (cur->next != NULL) {
-                // while there is something next
-                // release the current pair in the bucket
-                p = cur;
-                cur = cur->next;
+    hashtable_value * c;
+    hashtable_value * p;
+
+    hashtable_value * cur = t->_table;
+    unsigned int i = 0;
+    do {
+        if (cur->key != NULL) { // not empty
+            // release linked list of the entry
+            c = cur->next;
+            while (c != NULL) {
+                p = c;
+                c = c->next;
                 if (p->key == p->data) {
                     // key and data may point to the same
-                    // block of memmory
+                    // block of memory
                     free(p->data);
                 } else {
                     free(p->key);
@@ -56,41 +54,54 @@ void hashtable_free(hashtable * t) {
                 }
                 free(p);
             }
-            // release the last in the bucket
-            free(cur);
         }
-    }
+        // move to next entry in the table
+        cur++;
+        i++;
+    } while (i < t->table_size);
+
     free(t->_table);
     free(t);
 
 }
 
-unsigned int hashtable_hash(void * k) {
-    return _hashtable_hash(k) % _TABLE_SIZE_;
+unsigned int hashtable_hash(void * k, const unsigned int tblsize) {
+    return _hashtable_hash(k) % tblsize;
 }
 
 void hashtable_put(hashtable * t, void * k, void * v) {
 
-    int idx = hashtable_hash(k);
-    // create a key-value pair
-    hashtable_value * val = (hashtable_value *) malloc(sizeof(hashtable_value));
-    val->key = k;
-    val->data = v;
-    val->next = NULL;
+    int idx = hashtable_hash(k, t->table_size);
+    hashtable_value * cur = &t->_table[idx];
 
-    if (t->_table[idx] == NULL) {
+    if (cur->key == NULL) { // empty entry
 
-        // the first pair in the empty bucket
-        t->_table[idx] = val;
+        cur->key = k;
+        cur->data = v;
+        cur->next = NULL;
+        cur->last = NULL;
+        // last is NULL when there is nothing appended
 
     } else {
 
-        // if not empty, append to the end
-        hashtable_value * cur;
-        cur = t->_table[idx];
-        while (cur->next != NULL)
-            cur = cur->next; // for simplicity, there is no duplication prevention
-        cur->next = val;
+        // create a key-value pair
+        hashtable_value * val = (hashtable_value *) malloc(sizeof(hashtable_value));
+        val->key = k;
+        val->data = v;
+        val->next = NULL;
+        val->last = NULL;
+
+        if (cur->last == NULL) {
+            // not empty & nothing appended
+            // so, it's the second
+            cur->next = val;
+            cur->last = val;
+        } else {
+            // for simplicity, there is no duplication prevention
+            // directly append to the last
+            cur->last->next = val;
+            cur->last = val;
+        }
 
     }
 
@@ -101,26 +112,19 @@ void hashtable_put(hashtable * t, void * k, void * v) {
 
 void * hashtable_get(hashtable * t, void * k) {
 
-    int idx = hashtable_hash(k);
-    if (t->_table[idx] == NULL) {
+    int idx = hashtable_hash(k, t->table_size);
+    hashtable_value * cur = &t->_table[idx];
 
-        return NULL; // not found
-
-    } else {
-
+    if (cur->key != NULL) {
         // for a non-empty bucket,
         // search for a pair with the exact key
-        hashtable_value * cur;
-        cur = t->_table[idx];
         do {
             if (_hashtable_comp(cur->key, k))
                 return cur->data; // found
             cur = cur->next;
         } while (cur != NULL);
-
-        return NULL; // not found
-
     }
 
-}
+    return NULL; // not found
 
+}
