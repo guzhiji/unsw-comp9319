@@ -4,19 +4,26 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "hashtable.h"
 #include "symbol.h"
 
+#ifndef _LZW_STRING_INC
+#define _LZW_STRING_INC 32
+#endif
+
 /**
  * DATA TYPE: LZW string character
  */
+/*
 typedef struct _lzw_char lzw_char;
 
 struct _lzw_char {
     int data;
     lzw_char * next;
 };
+*/
 
 /**
  * DATA TYPE: LZW string
@@ -24,9 +31,11 @@ struct _lzw_char {
 typedef struct _lzw_string lzw_string;
 
 struct _lzw_string {
-    lzw_char * head;
-    lzw_char * tail;
+    //lzw_char * head;
+    //lzw_char * tail;
+    char * data;
     int length;
+    int max_length;
     int hash_code;
 };
 

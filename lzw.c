@@ -4,8 +4,11 @@
 lzw_string * lzw_string_init() {
 
     lzw_string * s = (lzw_string *) malloc(sizeof(lzw_string));
-    s->head = NULL;
-    s->tail = NULL;
+    //s->head = NULL;
+    //s->tail = NULL;
+    s->data = (char *) malloc(sizeof(char) * _LZW_STRING_INC);
+    s->data[0] = '\0';
+    s->max_length = _LZW_STRING_INC;
     s->length = 0;
     s->hash_code = 0;
     return s;
@@ -15,11 +18,18 @@ lzw_string * lzw_string_init() {
 int lzw_string_hash(lzw_string * s) {
 
     int h = 0;
-
+/*
     lzw_char * cc = s->head;
     while (cc != NULL) {
         h = 31 * h + cc->data;
         cc = cc->next;
+    }
+*/
+    int l = 0;
+    char * c = s->data;
+    while (l++ < s->length) {
+        h = 31 * h + (int)*c;
+        c++;
     }
 
     return h;
@@ -42,6 +52,18 @@ int lzw_string_hashnew(lzw_string * s, int c) {
  */
 void _lzw_string_append(lzw_string * s, int c, int h) {
 
+    if (s->length + 1 == s->max_length) {
+        char * t = s->data;
+        s->max_length += _LZW_STRING_INC;
+        s->data = (char *) malloc(sizeof(char) * s->max_length);
+        strncpy(s->data, t, s->length);
+        free(t);
+    }
+    s->data[s->length] = (char) c;
+    s->data[++s->length] = '\0';
+    s->hash_code = h;
+
+/*
     // create a char node
     lzw_char * nc = (lzw_char *) malloc(sizeof(lzw_char));
     nc->data = c;
@@ -58,7 +80,7 @@ void _lzw_string_append(lzw_string * s, int c, int h) {
     // update other info
     s->length++;
     s->hash_code = h;
-
+*/
 }
 
 int lzw_string_append(lzw_string * s, int c) {
@@ -71,6 +93,16 @@ int lzw_string_append(lzw_string * s, int c) {
 }
 
 int lzw_string_equals(lzw_string * s1, lzw_string * s2) {
+
+    if (s1->hash_code != s2->hash_code)
+        return 0;
+
+    if (s1->length != s2->length)
+        return 0;
+
+    return 0 == strncmp(s1->data, s2->data, s1->length);
+
+/*
     lzw_char * c1 = s1->head;
     lzw_char * c2 = s2->head;
     while (c1 != NULL && c2 != NULL) {
@@ -80,22 +112,25 @@ int lzw_string_equals(lzw_string * s1, lzw_string * s2) {
     }
     if (c1 == NULL && c2 == NULL) return 1;
     return 0;
+*/
 }
 
 void lzw_string_print(lzw_string * s, FILE * fp) {
-
+/*
     lzw_char * cc = s->head;
     while (cc != NULL) {
         fputc(cc->data, fp);
         //fprintf(fp, "%d", cc->data);
         cc = cc->next;
     }
-
+*/
+    fputs(s->data, fp);
 }
 
 void lzw_string_free(lzw_string * s) {
 
     // free chars
+/*
     lzw_char * t;
     lzw_char * cc = s->head;
     while (cc != NULL) {
@@ -103,7 +138,8 @@ void lzw_string_free(lzw_string * s) {
         cc = cc->next;
         free(t);
     }
-
+*/
+    free(s->data);
     // free string itself
     free(s);
 
