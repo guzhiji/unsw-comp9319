@@ -22,6 +22,9 @@ struct _hashtable_value {
  */
 typedef struct {
     hashtable_value * _table;
+    unsigned int (*_hash)(void *);
+    int (*_comp)(void *, void *);
+    void (*_free)(void *, void *);
     unsigned int size;
     unsigned int table_size;
 } hashtable;
@@ -37,11 +40,6 @@ hashtable * hashtable_init(const unsigned int tblsize);
 void hashtable_free(hashtable * t);
 
 /**
- * hash a key
- */
-unsigned int hashtable_hash(void * k, const unsigned int tblsize);
-
-/**
  * put a key-value pair into the hashtable
  */
 void hashtable_put(hashtable * t, void * k, void * v);
@@ -54,12 +52,17 @@ void * hashtable_get(hashtable * t, void * k);
 /**
  * set a custom function for hashing keys
  */
-void hashtable_sethashfunc(unsigned int (*h)(void *));
+void hashtable_sethashfunc(hashtable * t, unsigned int (*h)(void *));
 
 /**
  * set a custom function for comparing keys equal or not
  */
-void hashtable_setcompfunc(int (*c)(void *, void *));
+void hashtable_setcompfunc(hashtable * t, int (*c)(void *, void *));
+
+/**
+ * set a custom function for releasing resources of key and data
+ */
+void hashtable_setfreefunc(hashtable * t, void (*f)(void *, void *));
 
 #endif
 

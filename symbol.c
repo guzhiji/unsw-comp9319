@@ -112,10 +112,10 @@ int utf8_char(FILE * fp) {
 int getsymbol(FILE * fp, unsigned short w) {
 
     static unsigned short bits_read = 0;
-    static int symbol_remaining = 0;
+    static int symbol_buffer = 0;
 
     int c;
-    unsigned int s = symbol_remaining;
+    unsigned int s = symbol_buffer;
 
     while (bits_read < w) {
         c = fgetc(fp); // a char of 8 bits
@@ -123,7 +123,7 @@ int getsymbol(FILE * fp, unsigned short w) {
             // reach the end before reaching the required width
             // reset
             bits_read = 0;
-            symbol_remaining = 0;
+            symbol_buffer = 0;
 
             if (s == 0) return EOF;
             return s;
@@ -134,7 +134,7 @@ int getsymbol(FILE * fp, unsigned short w) {
     }
 
     bits_read -= w;
-    symbol_remaining = ((1 << bits_read) - 1) & c;
+    symbol_buffer = ((1 << bits_read) - 1) & c;
 
     return s >> bits_read;
 
@@ -142,13 +142,21 @@ int getsymbol(FILE * fp, unsigned short w) {
 
 void putsymbol(FILE * fp, int c, unsigned short w) {
 
-/*
-    static unsigned short bits_written = 0;
-    static int symbol_remaining = 0;
-    int s = symbol_remaining;
-
-    while (bits_written < w) {
-
+    static int bits_remaining = 0;
+    static int symbol_buffer = 0;
+    if (c != EOF) {
+        // accept a new symbol of width w
+        symbol_buffer = (symbol_buffer << w) | c;
+        bits_remaining += w;
+    } else if (bits_remaining > 0) {
+        // flush buffer, which was fewer than 8 bits
+        bits_remaining = 8;
     }
-*/
+    while (bits_remaining >= 8) {
+        fputc(symbol_buffer, fp); // write a byte
+        symbol_buffer >>= 8; // drop the byte
+        bits_remaining -= 8;
+        // continue when there're more bytes
+    }
+
 }

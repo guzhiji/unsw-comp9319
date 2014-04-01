@@ -28,7 +28,9 @@ int lzw_string_hash(lzw_string * s) {
     int l = 0;
     char * c = s->data;
     while (l++ < s->length) {
-        h = 31 * h + (int)*c;
+        // h = 31 * h + (int)*c;
+        h = 7 * h + (int)*c;
+        //h ^= (int)*c;
         c++;
     }
 
@@ -39,7 +41,9 @@ int lzw_string_hash(lzw_string * s) {
 int lzw_string_hashnew(lzw_string * s, int c) {
 
     // return lzw_string_hash(s) * 31 + c;
-    return s->hash_code * 31 + c;
+    // return s->hash_code * 31 + c;
+    return s->hash_code * 7 + c;
+    //return s->hash_code ^ c;
 
 }
 
@@ -166,69 +170,81 @@ int hashtable_comp_lzwstring(void * k1, void * k2) {
     return lzw_string_equals((lzw_string *) k1, (lzw_string *) k2);
 }
 
+/**
+ * custom function for releasing a LZW string key and an int value
+ *
+ * @param lzw_string *      pointer to a string key
+ * @param unsigned int *    pointer to an unsigned integer as data
+ */
+void hashtable_free_lzwstringint(void * key, void * data) {
+    lzw_string_free(key);
+    free(data);
+}
+
+/**
+ * custom function for releasing a key-value pair of LZW strings
+ *
+ * @param lzw_string *      pointer to a string key
+ * @param lzw_string *      pointer to a string as data
+ */
+void hashtable_free_lzwstring(void * key, void * data) {
+
+    // key and data may point to the same
+    // block of memory
+    if (key != data)
+        lzw_string_free(data);
+    lzw_string_free(key);
+
+}
+
 void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
 
-    int c;
-    int next_code = 256;
-    int prev_code = 0;
+    int c, h;
+    int * cp;
+    unsigned int next_code = 256;
+    unsigned int prev_code = 0;
     lzw_string * buf = lzw_string_init();
     hashtable * ht = hashtable_init(5021);
 
-    hashtable_setcompfunc(hashtable_comp_lzwstring);
-    hashtable_sethashfunc(hashtable_hash_lzwstring);
+    hashtable_setcompfunc(ht, hashtable_comp_lzwstring);
+    hashtable_sethashfunc(ht, hashtable_hash_lzwstring);
+    hashtable_setfreefunc(ht, hashtable_free_lzwstringint);
 
     while ((c = fgetc(fin)) != EOF) {
 
-        // test if the new string is known
-        int h = lzw_string_hashnew(buf, c);
-        int * cp = hashtable_get(ht, &h);
+        h = lzw_string_append(buf, c);
+        cp = (int *) hashtable_get(ht, &h);
         if (cp != NULL) { // known
 
             prev_code = *cp;
-            _lzw_string_append(buf, c, h); // since h is already known
 
-        } else { // unknown
+        } else { // the newer string is unknown
 
-            if (buf->length) {
-                int code;
+            // output its known string before the newer
+            if (prev_code)
+                putsymbol(fout, prev_code, w);
 
-                // buf is not empty
-                // which means that buf + c is a string
-                // not a single char
+            // save the newer unknown string
+            if (buf->length > 1) {
+                // make sure it's a string, not a single char
+                unsigned int * code = (unsigned int *) malloc(sizeof(unsigned int));
+                *code = next_code++;
+                hashtable_put(ht, buf, code);
+                // buf is stored and its resource is managed by hashtable
 
-                // for the first char,
-                // there not previous one
-
-                // output code for the old string or char
-                // TODO: in symbol.c
-                fputc(prev_code, fout);
-
-                // save the hashed new string with the next code
-                code = next_code++;
-                hashtable_put(ht, &h, &code);
-
-                // reset the string/buf
-                // it's not necessary when buf->length==0
-                lzw_string_free(buf);
+                // reset buf to the newest char
                 buf = lzw_string_init();
+                lzw_string_append(buf, c);
+            } // for buf->length == 1, the newest char is already in buf
 
-            }
-
-            // use the first char value as its code
             prev_code = c;
-            lzw_string_append(buf, c);
-            // since buf is cleared,
-            // h is no longer valid
-
         }
 
     }
 
-    if (prev_code) {
-        // TODO: the last code for buf
-        fputc(prev_code, fout);
-        // TODO: flush
-    }
+    // flush
+    if (prev_code)
+        putsymbol(fout, EOF, w);
 
     hashtable_free(ht);
     lzw_string_free(buf);
@@ -244,8 +260,9 @@ int lzw_csize(FILE * fp, unsigned short w) {
     lzw_string * hts;
 
     // setup hashtable custom functions
-    hashtable_setcompfunc(hashtable_comp_lzwstring);
-    hashtable_sethashfunc(hashtable_hash_lzwstring);
+    hashtable_setcompfunc(ht, hashtable_comp_lzwstring);
+    hashtable_sethashfunc(ht, hashtable_hash_lzwstring);
+    hashtable_setfreefunc(ht, hashtable_free_lzwstring);
 
     while ((c = fgetc(fp)) != EOF) {
 

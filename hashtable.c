@@ -1,22 +1,16 @@
 
 #include "hashtable.h"
 
-/**
- * internal custom hash function pointer
- */
-unsigned int (*_hashtable_hash)(void * k);
-
-void hashtable_sethashfunc(unsigned int (*h)(void *)) {
-    _hashtable_hash = h;
+void hashtable_sethashfunc(hashtable * t, unsigned int (*h)(void *)) {
+    t->_hash = h;
 }
 
-/**
- * internal custom compare function pointer
- */
-int (*_hashtable_comp)(void * k1, void * k2);
+void hashtable_setcompfunc(hashtable * t, int (*c)(void *, void *)) {
+    t->_comp = c;
+}
 
-void hashtable_setcompfunc(int (*c)(void *, void *)) {
-    _hashtable_comp = c;
+void hashtable_setfreefunc(hashtable * t, void (*f)(void *, void *)) {
+    t->_free = f;
 }
 
 hashtable * hashtable_init(const unsigned int tblsize) {
@@ -44,14 +38,7 @@ void hashtable_free(hashtable * t) {
             while (c != NULL) {
                 p = c;
                 c = c->next;
-                if (p->key == p->data) {
-                    // key and data may point to the same
-                    // block of memory
-                    free(p->data);
-                } else {
-                    free(p->key);
-                    free(p->data);
-                }
+                t->_free(p->key, p->data);
                 free(p);
             }
         }
@@ -65,13 +52,9 @@ void hashtable_free(hashtable * t) {
 
 }
 
-unsigned int hashtable_hash(void * k, const unsigned int tblsize) {
-    return _hashtable_hash(k) % tblsize;
-}
-
 void hashtable_put(hashtable * t, void * k, void * v) {
 
-    int idx = hashtable_hash(k, t->table_size);
+    unsigned int idx = t->_hash(k) % t->table_size;
     hashtable_value * cur = &t->_table[idx];
 
     if (cur->key == NULL) { // empty entry
@@ -112,14 +95,14 @@ void hashtable_put(hashtable * t, void * k, void * v) {
 
 void * hashtable_get(hashtable * t, void * k) {
 
-    int idx = hashtable_hash(k, t->table_size);
+    unsigned int idx = t->_hash(k) % t->table_size;
     hashtable_value * cur = &t->_table[idx];
 
     if (cur->key != NULL) {
         // for a non-empty bucket,
         // search for a pair with the exact key
         do {
-            if (_hashtable_comp(cur->key, k))
+            if (t->_comp(cur->key, k))
                 return cur->data; // found
             cur = cur->next;
         } while (cur != NULL);

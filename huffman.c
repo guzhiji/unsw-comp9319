@@ -254,6 +254,17 @@ int hashtable_comp_int(void * k1, void * k2) {
     return (* (int *) k1) == (* (int *) k2);
 }
 
+/**
+ * custom function for releasing an int key and a Huffman node as data
+ *
+ * @param int *             pointer to an int key
+ * @param huffman_node *    pointer to a Huffman node as data
+ */
+void hashtable_free_intnode(void * key, void * data) {
+    free(key);
+    free(data);
+}
+
 int huffman_csize(FILE * fp) {
 
     int s;
@@ -263,8 +274,9 @@ int huffman_csize(FILE * fp) {
     hashtable * ht = hashtable_init(5021);
 
     // setup hashtable custom functions
-    hashtable_setcompfunc(hashtable_comp_int);
-    hashtable_sethashfunc(hashtable_hash_int);
+    hashtable_setcompfunc(ht, hashtable_comp_int);
+    hashtable_sethashfunc(ht, hashtable_hash_int);
+    hashtable_setfreefunc(ht, hashtable_free_intnode);
 
     firstsymbol = _getallsymbols(fp, ht);
     if (firstsymbol != NULL) {
