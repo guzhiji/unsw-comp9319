@@ -30,7 +30,7 @@ int lzw_string_hash(lzw_string * s) {
     while (l++ < s->length) {
         // h = 31 * h + (int)*c;
         h = 7 * h + (int)*c;
-        //h ^= (int)*c;
+        //h = (h << 4) ^ (int)*c;
         c++;
     }
 
@@ -43,7 +43,7 @@ int lzw_string_hashnew(lzw_string * s, int c) {
     // return lzw_string_hash(s) * 31 + c;
     // return s->hash_code * 31 + c;
     return s->hash_code * 7 + c;
-    //return s->hash_code ^ c;
+    //return (s->hash_code << 4) ^ c;
 
 }
 
@@ -203,8 +203,9 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
     int * cp;
     unsigned int next_code = 256;
     unsigned int prev_code = 0;
+    unsigned int max_code = (1 << w) - 2;
     lzw_string * buf = lzw_string_init();
-    hashtable * ht = hashtable_init(5021);
+    hashtable * ht = hashtable_init(50021);
 
     hashtable_setcompfunc(ht, hashtable_comp_lzwstring);
     hashtable_sethashfunc(ht, hashtable_hash_lzwstring);
@@ -226,11 +227,17 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
 
             // save the newer unknown string
             if (buf->length > 1) {
-                // make sure it's a string, not a single char
-                unsigned int * code = (unsigned int *) malloc(sizeof(unsigned int));
-                *code = next_code++;
-                hashtable_put(ht, buf, code);
-                // buf is stored and its resource is managed by hashtable
+
+                if (next_code <= max_code) {
+                    // make sure it's a string, not a single char
+                    unsigned int * code = (unsigned int *) malloc(sizeof(unsigned int));
+                    *code = next_code++;
+                    hashtable_put(ht, buf, code);
+                    // buf is stored and its resource is managed by hashtable
+                } else {
+                    // if buf is not stored, free it before re-initialized
+                    lzw_string_free(buf);
+                }
 
                 // reset buf to the newest char
                 buf = lzw_string_init();
@@ -254,8 +261,9 @@ void lzw_compress(FILE * fin, FILE * fout, unsigned short w) {
 int lzw_csize(FILE * fp, unsigned short w) {
 
     int c;
-    int s = 0; // size in bits
-    hashtable * ht = hashtable_init(5021);
+    unsigned long s = 0; // size in bits
+    unsigned int max_code = (1 << w) - 2, code = 256;
+    hashtable * ht = hashtable_init(50021);
     lzw_string * buf = lzw_string_init();
     lzw_string * hts;
 
@@ -268,14 +276,14 @@ int lzw_csize(FILE * fp, unsigned short w) {
 
         lzw_string_append(buf, c);
         hts = hashtable_get(ht, buf);
-        // hashtable has been upgraded and there is no need to call equals() here
-        if (hts == NULL /* || !lzw_string_equals(buf, hts) */) { // unknown
+        if (hts == NULL) { // unknown
 
-            if (buf->length > 1) {
+            if (buf->length > 1 && code <= max_code) {
 
                 // buf + c is not a single char
                 // save the hashed new string
                 hashtable_put(ht, buf, buf);
+                code++;
 
             }
 
