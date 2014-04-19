@@ -18,7 +18,7 @@ typedef struct {
 typedef struct {
     unsigned int char_num;
     character char_table[256];
-    character * hashtable[256]; // ref to char_table elements
+    character * char_hash[256]; // ref to char_table elements
     //char chars[256]; // to be sorted
     // FILE * fp;
 } bwttext;
@@ -27,7 +27,7 @@ void bwttext_inithashtable(bwttext * t) {
     character ** htc; // char ref to hashtable
     int c;
 
-    htc = t->hashtable;
+    htc = t->char_hash;
     c = 0;
     while (c++ < 256) {
         *htc = NULL;
@@ -42,7 +42,7 @@ void bwttext_hashchars(bwttext * t) {
     c = 0;
     cch = t->char_table;
     while (c++ < t->char_num) {
-        t->hashtable[(unsigned int) cch->c] = cch;
+        t->char_hash[(unsigned int) cch->c] = cch;
         cch++;
     }
 }
@@ -68,14 +68,14 @@ bwttext * read_bwttext(FILE * fp) {
     chobj = t->char_table;
     curchar = chars;
     while ((c = fgetc(fp)) != EOF) {
-        cch = t->hashtable[c];
+        cch = t->char_hash[c];
         if (cch == NULL) {
             // not found, so it's new
 
-            // map it to hashtable
+            // map c to obj using char_hash
             *curchar = chobj->c = (unsigned char) c;
             chobj->frequency = 1;
-            t->hashtable[c] = chobj;
+            t->char_hash[c] = chobj;
 
             // go to next char
             t->char_num++;
@@ -86,7 +86,7 @@ bwttext * read_bwttext(FILE * fp) {
             cch->frequency++;
     }
 
-    // sort characters lexcographically
+    // sort characters lexicographically
     qsort(chars, t->char_num, sizeof(unsigned char), cmp_char);
 
     // calculate smaller symbols using freq 
@@ -96,7 +96,7 @@ bwttext * read_bwttext(FILE * fp) {
     curchar = chars; // smallest char
     while (c++ < t->char_num) {
         //printf("%d\n", *curchar);
-        cch = t->hashtable[(unsigned int) *curchar];
+        cch = t->char_hash[(unsigned int) *curchar];
         cch->smaller_symbols = sbefore; // update
         sbefore += cch->frequency; // accumulate freq
         curchar++; // a larger char
@@ -167,12 +167,13 @@ char count
 [
     char
     smaller symbols
+    char group size
+    smaller groups
     ,
     ...
 ]
 
 [
-    char group size
     [
         start pos
         size
