@@ -1,5 +1,8 @@
 
 #include "bwtindex.h"
+#include "chargroup.h"
+#include "exarray.h"
+#include <stdlib.h>
 
 void bwtindex_chartable_init(bwttext * t) {
 
@@ -7,7 +10,7 @@ void bwtindex_chartable_init(bwttext * t) {
 }
 
 void bwtindex_free(bwttext * t) {
-    character * chobj, * tc;
+    character * chobj;
     unsigned int i;
 
     // release characters
@@ -81,50 +84,35 @@ void bwtindex_chartable_save(bwttext * t) {
     fwrite(&startpos, sizeof(unsigned long), 1, t->ifp);
 }
 
-void bwtindex_chargrouplist_load(bwttext * t, unsigned char c) {
+void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
 
-    exarray_node * n;
-    character * chobj;
+    exarray_cursor * cur;
+    exarray * arr;
     unsigned long * pos;
-    unsigned int i;
+    unsigned long posbase;
+    unsigned int lastsize;
 
-    chobj = t->char_hash[(unsigned int) c];
-    // TODO error handling
-    if (chobj == NULL) {
-        printf("unknown char %d", c);
-        return;
-    }
+    cur = NULL;
+    while ((cur = exarray_next(chobj->chargroup_list_positions, cur)) != NULL) {
 
-    // for each char group list position
-    n = chobj->chargroup_list_positions->head;
-    while (n != NULL) {
-        pos = (unsigned long *) n->arr;
-        for (i = 0; i < n->size; i++) {
-            exarray * arr;
-            unsigned long posbase = 0;
-            unsigned int lastsize = 0;
+        // find the position of the chargroup list
+        pos = (unsigned long *) cur->data;
+        fseek(t->ifp, *pos, SEEK_SET);
 
-            // find the position of the chargroup list
-            fseek(t->ifp, *pos, SEEK_SET);
+        // read data
+        posbase = 0;
+        fread(&posbase, sizeof(unsigned long), 1, t->ifp);
+        arr = exarray_load(t->ifp, 10, sizeof(bwtindex_chargroup));
+        lastsize = 0;
+        fread(&lastsize, sizeof(unsigned int), 1, t->ifp);
 
-            // read data
-            fread(&posbase, sizeof(unsigned long), 1, t->ifp);
-            arr = exarray_load(t->ifp, 10, sizeof(bwtindex_chargroup));
-            fread(&lastsize, sizeof(unsigned int), 1, t->ifp);
+        // add to char group list
+        if (chobj->grouplist == NULL)
+            chobj->grouplist = chargroup_list_init(posbase);
+        exarray_addall(chobj->grouplist->groups, arr);
+        free(arr);
+        chobj->grouplist->last_chargroup_size = lastsize;
 
-            // add to char group list
-            // TODO multiple group lists
-            if (chobj->grouplist == NULL)
-                chobj->grouplist = chargroup_list_init(c, posbase);
-            exarray_addall(chobj->grouplist->groups, arr);
-            free(arr);
-            chobj->grouplist->last_chargroup_size = lastsize;
-
-            // next chargroup list
-            pos++;
-        }
-        // next exarray node
-        n = n->next;
     }
 
 }
@@ -132,7 +120,7 @@ void bwtindex_chargrouplist_load(bwttext * t, unsigned char c) {
 void bwtindex_chargrouplist_save(chargroup_list * l, FILE * f) {
 
     fwrite(&l->position_base, sizeof(unsigned long), 1, f);
-    exarray_save(f, l->groups);
+    exarray_save(l->groups, f);
     fwrite(&l->last_chargroup_size, sizeof(unsigned int), 1, f);
 
 }

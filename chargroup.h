@@ -30,11 +30,12 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg);
 /**
  * initialize a chargroup list
  */
-chargroup_list * chargroup_list_init(unsigned char c, unsigned long base);
+chargroup_list * chargroup_list_init(unsigned long base);
 
 void chargroup_list_savereleaseall(bwttext * t);
 
-void chargroup_list_free(chargroup_list * l);
+unsigned int chargroup_list_size(chargroup_list * l);
+
+unsigned int chargroup_list_free(chargroup_list * l);
 
 #endif
-

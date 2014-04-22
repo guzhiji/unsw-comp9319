@@ -3,6 +3,9 @@
  * bwtsearch: implements BWT backward search
  */
 
+#ifndef _BWTSEARCH_H_
+#define _BWTSEARCH_H_
+
 typedef struct {
     unsigned long first;
     unsigned long last;
@@ -21,3 +24,4 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos);
 
 // TODO reverse data
 
+#endif

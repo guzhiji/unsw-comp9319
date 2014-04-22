@@ -5,38 +5,44 @@
 
 chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
     unsigned int i;
-    character * ch = t->char_hash[(unsigned int) c];
-    chargroup_list * l = ch->grouplist;
+    character * ch;
+    chargroup_list * l;
 
-    if (l == NULL) { // not loaded yet
+    ch = t->char_hash[(unsigned int) c];
+    if (ch->grouplist == NULL) { // not loaded yet
 
         // release the least frequent ones
-        //while (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) {
+
+        /* while (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) { */
         while (t->chargroup_num >= CHARGROUP_NUM_KEEP) {
-            t->chargroup_num -= chargroup_list_free(&t->chargroup_list_sorted[--t->chargroup_list_num]);
+            t->chargroup_num -= chargroup_list_free(
+                    t->chargroup_list_sorted[
+                        --t->chargroup_list_num]);
         }
 
         // load the chargroup list for c from index file
-        l = chargroup_list_read(t->ifp, c);
-        t->chargroup_num += chargroup_list_size(l);
-        t->chargroup_list_hash[(unsigned int) c] = l;
+
+        bwtindex_chargrouplist_load(t, ch);
+        t->chargroup_num += chargroup_list_size(ch->grouplist);
 
         // insert the new list by frequency
-        i = t->chargroup_list_num++; // point to the one after the last and increment count
+
+        i = t->chargroup_list_num++; // point to the one after the last
+                                     // and increment count
         while (1) {
-            if (i >= 1 && t->chargroup_list_sorted[i - 1]->cp->frequency < l->cp->frequency) {
+            if (i >= 1 && t->char_hash[i - 1]->info->frequency < ch->info->frequency) {
                 // push i-1 to i
                 t->chargroup_list_sorted[i] = t->chargroup_list_sorted[--i];
             } else {
                 // insert at i
-                t->chargroup_list_sorted[i] = l;
+                t->chargroup_list_sorted[i] = ch->grouplist;
                 break;
             }
         }
 
     }
 
-    return l;
+    return ch->grouplist;
 }
 
 void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
@@ -45,10 +51,10 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
     bwtindex_chargroup icg;
 
     // get the chargroup list for the char c
-    character * ch = t->char_hash[(unsigned int) c];
-    chargroup_list * l = ch->grouplist;
+    ch = t->char_hash[(unsigned int) c];
+    l = ch->grouplist;
     if (l == NULL) {
-        l = ch->grouplist = chargroup_list_init(c, cg->start);
+        l = ch->grouplist = chargroup_list_init(cg->start);
         //t->chargroup_list_num++;
     }
 
@@ -93,7 +99,7 @@ void chargroup_list_savereleaseall(bwttext * t) {
     t->chargroup_num = 0;
 }
 
-chargroup_list * chargroup_list_init(unsigned char c, unsigned long base) {
+chargroup_list * chargroup_list_init(unsigned long base) {
 
     chargroup_list * l = (chargroup_list *) malloc(sizeof(chargroup_list));
     l->position_base = base;
@@ -103,7 +109,11 @@ chargroup_list * chargroup_list_init(unsigned char c, unsigned long base) {
 
 }
 
-void chargroup_list_free(chargroup_list * l) {
+unsigned int chargroup_list_size(chargroup_list * l) {
+}
+
+unsigned int chargroup_list_free(chargroup_list * l) {
     exarray_free(l->groups);
     free(l);
 }
+

@@ -6,7 +6,6 @@
 #ifndef _BWTINDEX_H_
 #define _BWTINDEX_H_
 
-#include "exarray.h"
 #include "bwttext.h"
 #include <stdio.h>
 
@@ -46,7 +45,7 @@ void bwtindex_chartable_load(bwttext * t);
 
 void bwtindex_chartable_save(bwttext * t);
 
-void bwtindex_chargrouplist_load(bwttext * t, unsigned char c);
+void bwtindex_chargrouplist_load(bwttext * t, character * ch);
 
 void bwtindex_chargrouplist_save(chargroup_list * l, FILE * f);
 

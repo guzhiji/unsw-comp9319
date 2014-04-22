@@ -1,5 +1,7 @@
 
 #include "bwtsearch.h"
+#include "bwttext.h"
+#include <stdio.h>
 
 fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 
@@ -32,17 +34,14 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 //TODO use bsearch
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     chargroup_list * list = chargroup_list_get(t, c);
-    chargroup * g = list->groups;
-    unsigned long o = 0;
-    unsigned int i;
-    for (i = 0; i < list->info->length; i++) {
-        if (pos >= list->info->start + g->start) {
-            o += pos - list->info->start - g->start;
-            break;
-        }
-        o += g->size;
-        g++;
-    }
-    return o;
-}
+    exarray_cursor cur = NULL;
+    bwtindex_chargroup * cg;
 
+    while ((cur = exarray_next(list->groups, cur)) != NULL) {
+        cg = (bwtindex_chargroup *) cur->data;
+        if (pos >= list->position_base + cg->offset)
+            return cg->occ_before;
+    }
+    return 0;
+
+}

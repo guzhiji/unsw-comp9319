@@ -43,6 +43,7 @@ typedef struct {
     unsigned int char_num;
     bwtindex_char char_table[256];
     character * char_hash[256];
+    chargroup_list * chargroup_list_sorted[256];
     unsigned long chargroup_num; // up to CHARGROUP_NUM_THRESHOLD
     unsigned int chargroup_list_num; // number of lists loaded
     FILE * fp;
