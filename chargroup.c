@@ -1,40 +1,18 @@
 
 #include "chargroup.h"
-
-/**
- * read a complete group list for a character
- */
-chargroup_list * chargroup_list_read(FILE * fp, unsigned char c) {
-    // fread
-}
-
-void chargroup_list_write(chargroup_list * cgl, FILE * fp) {
-    chargroup_list * cur;
-
-    cur = cgl;
-    while (cur != NULL) {
-        fwrite(cur->info, sizeof(chargroup_listinfo), 1, fp);
-        fwrite(cur->groups, sizeof(chargroup), cur->info->length, fp);
-        cur = cur->next;
-    }
-}
-
-unsigned int chargroup_list_size(chargroup_list * l) {
-}
-
-unsigned int chargroup_list_free(chargroup_list * l) {
-    // never release the head, it's in bwttext
-    // return total number of groups
-}
+#include "exarray.h"
+#include <stdlib.h>
 
 chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
     unsigned int i;
-    chargroup_list * l = t->chargroup_list_hash[(unsigned int) c];
+    character * ch = t->char_hash[(unsigned int) c];
+    chargroup_list * l = ch->grouplist;
 
-    if (l == NULL || l->info == NULL) { // not loaded yet
+    if (l == NULL) { // not loaded yet
 
         // release the least frequent ones
-        while (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) {
+        //while (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) {
+        while (t->chargroup_num >= CHARGROUP_NUM_KEEP) {
             t->chargroup_num -= chargroup_list_free(&t->chargroup_list_sorted[--t->chargroup_list_num]);
         }
 
@@ -62,83 +40,70 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
 }
 
 void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
-    chargroup_list * list;
+    character * ch;
+    chargroup_list * l;
+    bwtindex_chargroup icg;
 
-    list = t->chargroup_list_hash[(unsigned int) c];
-    if (list == NULL) {
-        // new char
-        list = t->chargroup_list_hash[(unsigned int) c] = chargroup_list_init();
-        t->chargroup_list_num++;
+    // get the chargroup list for the char c
+    character * ch = t->char_hash[(unsigned int) c];
+    chargroup_list * l = ch->grouplist;
+    if (l == NULL) {
+        l = ch->grouplist = chargroup_list_init(c, cg->start);
+        //t->chargroup_list_num++;
     }
+
+    // add the chargroup
+    // TODO check truncated?
+    icg.offset = (int) (cg->start - l->position_base);
+    icg.occ_before = ch->info->frequency;// TODO calculate occ
+    exarray_add(l->groups, &icg);
+    l->last_chargroup_size = cg->size; // the last so far
     t->chargroup_num++;
 
-    list->info->length++;
-    // add to list->groups
+    // write to disk if memory usage is over threshold
+    if (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD)
+        chargroup_list_savereleaseall(t);
 
 }
 
-void chargroup_add(bwttext * t, FILE * fp, chargroup * cg, unsigned char c) {
-}
+void chargroup_list_savereleaseall(bwttext * t) {
+    character * ch;
+    chargroup_list * l;
+    int i;
 
-chargroup_list * chargroup_list_load(FILE * fp) {
+    for (i = 0; i < 256; i++) {
+        ch = t->char_hash[i];
+        l = ch->grouplist;
+        if (l != NULL) {
 
-}
+            // save data
+            bwtindex_chargrouplist_save(l, t->ifp);
+            //fwrite(&l->position_base, sizeof(unsigned long), 1, t->ifp);
+            //exarray_save(t->ifp, l->groups);
+            //fwrite(&l->last_chargroup_size, sizeof(unsigned int), 1, t->ifp);
 
-/**
- * order by character frequency;
- * less frequent ones are closer to the end
- */
-int char_cmp_by_freq(const void * c1, const void * c2) {
-    character * ch1 = (character *) c1;
-    character * ch2 = (character *) c2;
-    if (ch1->frequency > ch2->frequency)
-        return -1;
-    else if (ch1->frequency < ch2->frequency)
-        return 1;
-    else
-        return 0;
-}
+            // release resources
+            exarray_free(l->groups);
+            free(l);
+            ch->grouplist = NULL;
 
-/**
- * order by character frequency;
- * less frequent ones are closer to the end
- */
-int chargroup_list_cmp(const void * c1, const void * c2) {
-    chargroup_list * cgl1 = (chargroup_list *) c1;
-    chargroup_list * cgl2 = (chargroup_list *) c2;
-    if (cgl1->cp->frequency > cgl2->cp->frequency)
-        return -1;
-    else if (cgl1->cp->frequency < cgl2->cp->frequency)
-        return 1;
-    else
-        return 0;
-}
-
-//TODO use bsearch
-unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
-    chargroup_list * list = chargroup_list_get(t, c);
-    chargroup * g = list->groups;
-    unsigned long o = 0;
-    unsigned int i;
-    for (i = 0; i < list->info->length; i++) {
-        if (pos >= list->info->start + g->start) {
-            o += pos - list->info->start - g->start;
-            break;
         }
-        o += g->size;
-        g++;
     }
-    return o;
+    //t->chargroup_list_num = 0;
+    t->chargroup_num = 0;
 }
 
-void chargroup_write(chargroup * cg, char c) {
-    if (cg->c == c) {
-        cg->data.size++;
-    } else {
-        // write cg->data
-        cg->data.start = cg->data.size;
-        cg->data.size = 1;
-        cg->c = c;
-    }
+chargroup_list * chargroup_list_init(unsigned char c, unsigned long base) {
+
+    chargroup_list * l = (chargroup_list *) malloc(sizeof(chargroup_list));
+    l->position_base = base;
+    l->last_chargroup_size = 0;
+    l->groups = exarray_init(10, 10, sizeof(bwtindex_chargroup));
+    return l;
+
 }
 
+void chargroup_list_free(chargroup_list * l) {
+    exarray_free(l->groups);
+    free(l);
+}

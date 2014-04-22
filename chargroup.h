@@ -1,47 +1,40 @@
 
+/**
+ * chargroup: manages memory usage of character groups
+ */
+
 #ifndef _CHARGROUP_H_
 #define _CHARGROUP_H_
 
+#include "bwttext.h"
+
 #define CHARGROUP_NUM_THRESHOLD 196608
+#define CHARGROUP_NUM_KEEP 98304
 
-typedef struct {
-    unsigned int start;
-    unsigned int size;
-} chargroup;
+/**
+ * get a char group list.
+ *
+ * if it's not available in the memory,
+ * reads it from the index file.
+ */
+chargroup_list * chargroup_list_get(bwttext * t, unsigned char c);
 
-typedef struct {
-    unsigned char c;
-    unsigned long start;
-    unsigned int length;
-    unsigned long next;
-} chargroup_listinfo;
+/**
+ * add a char group.
+ *
+ * it the amount in memory grows over the threshold,
+ * writes them into the index file and release them.
+ */
+void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg);
 
-typedef struct _chargroup_list chargroup_list;
-struct _chargroup_list {
-    chargroup_listinfo * info;
-    chargroup * groups;
-    chargroup_list * next;
-    character * cp;
-};
+/**
+ * initialize a chargroup list
+ */
+chargroup_list * chargroup_list_init(unsigned char c, unsigned long base);
 
+void chargroup_list_savereleaseall(bwttext * t);
 
-typedef struct {
-    unsigned int char_num; // distinct char number
-    character char_table[256]; // sorted by freq after loaded
-    character * char_hash[256]; // ref to char_table elements
-
-    unsigned long chargroup_num; // up to CHARGROUP_NUM_THRESHOLD
-    unsigned int chargroup_list_num; // number of lists loaded
-    chargroup_list * chargroup_list_sorted[256]; // by char freq, only use top chargroup_list_num
-    chargroup_list * chargroup_list_hash[256];
-    // FILE * fp;
-} bwttext;
-
-unsigned int chargroup_list_size(chargroup_list * l);
-unsigned int chargroup_list_free(chargroup_list * l);
-chargroup_list * chargroup_list_read(FILE * fp, unsigned char c);
-void chargroup_list_write(chargroup_list * cgl, FILE * fp);
-chargroup_list * chargroup_list_get(bwttext * t, FILE * fp, unsigned char c);
-void chargroup_list_add(bwttext * t, chargroup_list * l);
+void chargroup_list_free(chargroup_list * l);
 
 #endif
+

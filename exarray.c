@@ -1,24 +1,24 @@
 
 #include "exarray.h"
+//#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 
 exarray * exarray_init(
         unsigned int initial_size,
         unsigned int step_size,
-        unsigned int unit_size) {
+        unsigned long unit_size) {
 
     exarray * a;
-    exarray_node * n;
-
-    n = (exarray_node *) malloc(sizeof(exarray_node));
+    exarray_node * n = (exarray_node *) malloc(sizeof(exarray_node));
     n->arr = malloc(unit_size * initial_size);
     n->next = NULL;
     n->size = 0;
+    n->capacity = initial_size;
 
     a = (exarray *) malloc(sizeof(exarray));
-    a->initial_size = initial_size;
     a->step_size = step_size;
     a->unit_size = unit_size;
-    a->node_count = 1;
     a->head = a->tail = n;
 
     return a;
@@ -29,6 +29,7 @@ void exarray_free(exarray * a) {
     while (n != NULL) {
         t = n;
         n = n->next;
+        // TODO specialized free function
         free(t->arr);
         free(t);
     }
@@ -45,30 +46,80 @@ unsigned long exarray_size(exarray * a) {
     return l;
 }
 
-void exarray_add(exarray * a, void * e) {
+void exarray_add(exarray * a, const void * e) {
 
     exarray_node * n = a->tail;
-    if ((a->node_count == 1 && n->size == a->initial_size) ||
-            (a->node_count > 1 && n->size == a->step_size)) { 
+    if (n->size == n->capacity) {
         // the tail node is used up
         // create a new node
 
         n = (exarray_node *) malloc(sizeof(exarray_node));
         n->next = NULL;
         n->size = 0;
+        n->capacity = a->step_size;
         n->arr = malloc(a->unit_size * a->step_size);
 
         a->tail->next = n;
         a->tail = n;
-        a->node_count++;
 
     }
-    n->arr[n->size++] = *e;
+    //n->arr[n->size++] = *e;
+    memcpy(&n->arr[n->size++], e, a->unit_size);
 
 }
 
+// TODO check if newarray is released via exarray_free
+void exarray_addall(exarray * a, exarray * newarray) {
+    // more specifically, element types should be consistent
+    if (a->unit_size == newarray->unit_size) {
+        a->tail->next = newarray->head;
+        a->tail = newarray->tail;
+    }
+}
+
+/*
+exarray_cursor * exarray_next(exarray * a, exarray_cursor * cur) {
+    if (cur == NULL) {
+        // the first element, because no cursor means the first access
+        // but if it's empty, NULL represents nothing available as the next
+        if (a->head->size == 0) return NULL;
+        // create the cursor
+        cur = (exarray_cursor *) malloc(sizeof(exarray_cursor));
+        cur->node = a->head;
+        cur->position = 0;
+        cur->data = a->head->arr;
+        return cur;
+    } else if (cur->position + 1 < cur->node->size) {
+        // the next element is still in the same node
+        cur->position++;
+        cur->data++;
+        return cur;
+    } else if (/ * cur->node != a->tail && * / cur->node->next != NULL) {
+        // there are nodes afterwards
+        cur->node = cur->node->next;
+        cur->position = 0;
+        cur->data = cur->node->arr;
+        return cur;
+    } else {
+        // otherwise, it's the end
+        free(cur);
+        return NULL;
+    }
+}
+*/
+
 void exarray_save(exarray * a, FILE * f) {
-    exarray_node * n = a->head;
+    unsigned int nc = 0;
+    exarray_node * n;
+    
+    n = a->head;
+    while (n != NULL) {
+        nc++;
+        n = n->next;
+    }
+    fwrite(&nc, sizeof(unsigned int), 1, f);
+
+    n = a->head;
     while (n != NULL) {
         fwrite(&n->size, sizeof(unsigned int), 1, f);
         fwrite(n->arr, a->unit_size, n->size, f);
@@ -78,15 +129,40 @@ void exarray_save(exarray * a, FILE * f) {
 
 exarray * exarray_load(
         FILE * f,
-        unsigned int initial_size,
         unsigned int step_size,
-        unsigned int unit_size) {
+        unsigned long unit_size) {
 
-    unsigned int l = 0;
-    fread(&l, sizeof(unsigned int), 1, f);
+    unsigned int nc = 0, l, i;
+ 
+    exarray * a;
+    exarray_node * n, * p = NULL;
+
+    a = (exarray *) malloc(sizeof(exarray));
+    a->step_size = step_size;
+    a->unit_size = unit_size;
+
+    fread(&nc, sizeof(unsigned int), 1, f);
+    for (i = 0; i < nc; i++) {
+        l = 0;
+        fread(&l, sizeof(unsigned int), 1, f);
+
+        n = (exarray_node *) malloc(sizeof(exarray_node));
+        n->size = n->capacity = l;
+        n->arr = malloc(unit_size * l);
+        fread(n->arr, unit_size, l, f);
+
+        n->next = NULL;
+        if (p == NULL) // no previous, so it's the first
+            a->head = n;
+        else // the previous's next is the current node
+            p->next = n;
+        p = n;
+    }
+    a->tail = n;
+
+    return a;
 }
 
-//TODO positioning
 /*
 TODO
 void* bsearch (const void* key, const void* base,

@@ -1,90 +1,55 @@
 
-#include <stdlib.h>     /* qsort */
-#include <stdio.h>
+#include "bwttext.h"
 
-typedef struct {
-    unsigned char c;
-    unsigned int smaller_symbols;
-    unsigned int frequency;
-} character;
+bwttext * bwttext_read(FILE * fp) {
 
-typedef struct {
-    //char c;
-    unsigned long start_pos;
-    unsigned int size;
-    //unsigned int occ_before;
-} char_group;
-
-typedef struct {
-    unsigned int char_num;
-    character char_table[256];
-    character * char_hash[256]; // ref to char_table elements
-    //char chars[256]; // to be sorted
-    // FILE * fp;
-} bwttext;
-
-void bwttext_inithashtable(bwttext * t) {
-    character ** htc; // char ref to hashtable
     int c;
-
-    htc = t->char_hash;
-    c = 0;
-    while (c++ < 256) {
-        *htc = NULL;
-        htc++;
-    }
-}
-
-void bwttext_hashchars(bwttext * t) {
-    int c;
-    character * cch;
-
-    c = 0;
-    cch = t->char_table;
-    while (c++ < t->char_num) {
-        t->char_hash[(unsigned int) cch->c] = cch;
-        cch++;
-    }
-}
-
-int cmp_char(const void * c1, const void * c2) {
-    // return (int) * (char *) c1 - (int) * (char *) c2;
-    return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
-}
-
-bwttext * read_bwttext(FILE * fp) {
-    int c, sbefore;
-    unsigned char chars[256];
-    unsigned char * curchar;
-    character * chobj, * cch;
-    bwttext * t;
-
-    // initialize
-    t = (bwttext *) malloc(sizeof(bwttext));
-    t->char_num = 0;
-    //bwttext_inithashtable(t);
-
-    // scan the file and count character frequencies
-    chobj = t->char_table;
-    curchar = chars;
+    unsigned long pos = 0;
+    unsigned char prev_c;
+    unsigned char cur_c;
+    bwttext * t = (bwttext *) malloc(sizeof(bwttext));
+    character * chobj;
+    bwtindex_char * cur_ch = t->char_table;
+    chargroup * prev_cg = NULL;
     while ((c = fgetc(fp)) != EOF) {
-        cch = t->char_hash[c];
-        if (cch == NULL) {
-            // not found, so it's new
+        cur_c = (unsigned char) c;
 
-            // map c to obj using char_hash
-            *curchar = chobj->c = (unsigned char) c;
-            chobj->frequency = 1;
-            t->char_hash[c] = chobj;
-
-            // go to next char
+        // char frequency
+        chobj = t->char_hash[c];
+        if (chobj == NULL) {
+            cur_ch->c = cur_c;
+            cur_ch->frequency = 1;
+            t->char_table[c] = cur_ch;
             t->char_num++;
-            chobj++;
-            curchar++;
+            cur_ch++;
+        } else {
+            cur_ch->frequency++;
+        }
 
-        } else
-            cch->frequency++;
+        // continuous chars
+        if (prev_cg == NULL) {
+            // chargroup not initialized
+            prev_cg = (chargroup *) malloc(sizeof(chargroup));
+            prev_cg->start = pos;
+            prev_cg->size = 1;
+            prev_c = cur_c;
+        } else if (prev_c != cur_c) {
+            // a new char comes
+            // store the prev one
+            chargroup_list_add(t, prev_c, prev_cg);
+            // re-initialize chargroup for the new char
+            prev_cg = (chargroup *) malloc(sizeof(chargroup));
+            prev_cg->start = pos;
+            prev_cg->size = 1;
+            prev_c = cur_c;
+        } else {
+            prev_cg->size++;// TODO size may overflow
+        }
+        
+        pos++;
+
     }
+
 
     // sort characters lexicographically
     qsort(chars, t->char_num, sizeof(unsigned char), cmp_char);
@@ -102,87 +67,6 @@ bwttext * read_bwttext(FILE * fp) {
         curchar++; // a larger char
     }
 
-    return t;
 }
 
-int read_char_table(bwttext * t, FILE * fp) {
-
-    // read number of distinct chars
-    t->char_num = 0; // clear first
-    fread(&t->char_num, sizeof(unsigned int), 1, fp);
-
-    // nothing
-    if (t->char_num == 0)
-        return 0;
- 
-    // read char table
-    fread(t->char_table, sizeof(character), t->char_num, fp);
-
-    bwttext_inithashtable(t);
-    bwttext_hashchars(t);
-
-    return t->char_num;
-
-}
-
-void write_char_table(bwttext * t, FILE * fp) {
-
-    fwrite(&t->char_num, sizeof(unsigned int), 1, fp);
-    fwrite(t->char_table, sizeof(character), t->char_num, fp);
-
-}
-
-int main(int argc, char const *argv[]) {
-    FILE * fp, * ifp;
-    bwttext * t;
-
-    fp = fopen("../tests/bwtsearch/gcc.bwt", "rb");
-    t = read_bwttext(fp);
-    fclose(fp);
-
-    ifp = fopen("index1.idx", "wb");
-    write_char_table(t, ifp);
-    fclose(ifp);
-
-    free(t);
-
-    t = (bwttext *) malloc(sizeof(bwttext));
-
-    ifp = fopen("index1.idx", "rb");
-    read_char_table(t, ifp);
-    fclose(ifp);
-
-    ifp = fopen("index2.idx", "wb");
-    write_char_table(t, ifp);
-    fclose(ifp);
-
-    free(t);
-
-    return 0;
-}
-
-/*
-
-char count
-[
-    char
-    smaller symbols
-    char group size
-    smaller groups
-    ,
-    ...
-]
-
-[
-    [
-        start pos
-        size
-        ,
-        ...
-    ] 
-    ,
-    ...
-]
-
-*/
 
