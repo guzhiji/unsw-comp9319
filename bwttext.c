@@ -5,11 +5,9 @@
 typedef struct {
     unsigned char c;
     unsigned int smaller_symbols;
-    unsigned int frequency;
 } character;
 
 typedef struct {
-    //char c;
     unsigned long start_pos;
     unsigned int size;
     //unsigned int occ_before;
@@ -19,8 +17,7 @@ typedef struct {
     unsigned int char_num;
     character char_table[256];
     character * char_hash[256]; // ref to char_table elements
-    //char chars[256]; // to be sorted
-    // FILE * fp;
+    FILE * fp;
 } bwttext;
 
 void bwttext_inithashtable(bwttext * t) {
@@ -48,64 +45,58 @@ void bwttext_hashchars(bwttext * t) {
 }
 
 int cmp_char(const void * c1, const void * c2) {
-    // return (int) * (char *) c1 - (int) * (char *) c2;
-    return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
+    return (int) ((character *) c1)->c - (int) ((character *) c2)->c;
 }
 
-bwttext * read_bwttext(FILE * fp) {
-    int c, sbefore;
-    unsigned char chars[256];
-    unsigned char * curchar;
+void bwttext_readbwt(bwttext * t, FILE * fp) {
+    int c, sfreq, sbefore;
     character * chobj, * cch;
-    bwttext * t;
 
-    // initialize
-    t = (bwttext *) malloc(sizeof(bwttext));
-    t->char_num = 0;
-    //bwttext_inithashtable(t);
+    // bwttext_inithashtable(t);
 
     // scan the file and count character frequencies
     chobj = t->char_table;
-    curchar = chars;
     while ((c = fgetc(fp)) != EOF) {
         cch = t->char_hash[c];
         if (cch == NULL) {
             // not found, so it's new
 
-            // map c to obj using char_hash
-            *curchar = chobj->c = (unsigned char) c;
-            chobj->frequency = 1;
+            // temporarily hash it
+            chobj->c = (unsigned char) c;
+            chobj->smaller_symbols = 1; // freq
             t->char_hash[c] = chobj;
 
             // go to next char
             t->char_num++;
             chobj++;
-            curchar++;
 
         } else
-            cch->frequency++;
+            cch->smaller_symbols++;
     }
 
-    // sort characters lexicographically
-    qsort(chars, t->char_num, sizeof(unsigned char), cmp_char);
+    // sort characters lexcographically
+    qsort(t->char_table, t->char_num, sizeof(character), cmp_char);
 
     // calculate smaller symbols using freq 
     // to generate data for the C[] table
     c = 0; // count for boudndary
     sbefore = 0;
-    curchar = chars; // smallest char
+    cch = t->char_table; // smallest char
     while (c++ < t->char_num) {
-        //printf("%d\n", *curchar);
-        cch = t->char_hash[(unsigned int) *curchar];
-        cch->smaller_symbols = sbefore; // update
-        sbefore += cch->frequency; // accumulate freq
-        curchar++; // a larger char
+        //printf("%d\n", cch->c);
+        sfreq = cch->smaller_symbols; // actually freq
+        cch->smaller_symbols = sbefore; // correct it
+        sbefore += sfreq; // accumulate freq
+        cch++; // a larger char
     }
 
-    return t;
+    // re-hash
+    bwttext_inithashtable(t);
+    bwttext_hashchars(t);
+
 }
 
-int read_char_table(bwttext * t, FILE * fp) {
+int bwttext_chartable_read(bwttext * t, FILE * fp) {
 
     // read number of distinct chars
     t->char_num = 0; // clear first
@@ -125,7 +116,7 @@ int read_char_table(bwttext * t, FILE * fp) {
 
 }
 
-void write_char_table(bwttext * t, FILE * fp) {
+void bwttext_chartable_write(bwttext * t, FILE * fp) {
 
     fwrite(&t->char_num, sizeof(unsigned int), 1, fp);
     fwrite(t->char_table, sizeof(character), t->char_num, fp);
@@ -137,10 +128,11 @@ int main(int argc, char const *argv[]) {
     bwttext * t;
 
     fp = fopen("../tests/bwtsearch/gcc.bwt", "rb");
-    t = read_bwttext(fp);
+    t = (bwttext *) malloc(sizeof(bwttext));
+    bwttext_readbwt(t, fp);
     fclose(fp);
 
-    ifp = fopen("index1.idx", "wb");
+    ifp = fopen("bwttext1.idx", "wb");
     write_char_table(t, ifp);
     fclose(ifp);
 
@@ -148,11 +140,11 @@ int main(int argc, char const *argv[]) {
 
     t = (bwttext *) malloc(sizeof(bwttext));
 
-    ifp = fopen("index1.idx", "rb");
+    ifp = fopen("bwttext1.idx", "rb");
     read_char_table(t, ifp);
     fclose(ifp);
 
-    ifp = fopen("index2.idx", "wb");
+    ifp = fopen("bwttext2.idx", "wb");
     write_char_table(t, ifp);
     fclose(ifp);
 
@@ -161,19 +153,19 @@ int main(int argc, char const *argv[]) {
     return 0;
 }
 
+
 /*
 
 char count
 [
     char
     smaller symbols
-    char group size
-    smaller groups
     ,
     ...
 ]
 
 [
+    char group size
     [
         start pos
         size
