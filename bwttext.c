@@ -7,7 +7,7 @@ int cmp_char(const void * c1, const void * c2) {
     return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
 }
 
-bwttext * bwttext_read(FILE * fp) {
+void bwttext_read(bwttext * t) {
 
     int c;
     unsigned long pos = 0, sbefore;
@@ -15,11 +15,11 @@ bwttext * bwttext_read(FILE * fp) {
     unsigned char cur_c;
     unsigned char chars[256];
     unsigned char * cur_cp = chars;
-    bwttext * t = (bwttext *) malloc(sizeof(bwttext));
+    //bwttext * t = (bwttext *) malloc(sizeof(bwttext));
     character * chobj;
     bwtindex_char * cur_ch = t->char_table;
     chargroup * prev_cg = NULL;
-    while ((c = fgetc(fp)) != EOF) {
+    while ((c = fgetc(t->fp)) != EOF) {
         cur_c = (unsigned char) c;
 
         // char frequency

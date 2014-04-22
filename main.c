@@ -1,111 +1,29 @@
-/*
- * csize.c
- *
- */
+
+#include "bwttext.h"
+#include "bwtsearch.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "huffman.h"
-#include "lzw.h"
+#include <string.h>
 
 int main(int argc, char **argv) {
-/*
-    FILE * fp;
+    FILE * fp = fopen("tests/tiny.bwt", "rb");
+    FILE * ifp = fopen("tiny.idx", "wrb");
+    bwttext * t = (bwttext *) malloc(sizeof(bwttext));
+    fpos_range * r;
+    unsigned char * p = "abcd";
 
-    fp = fopen("file1.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", huffman_csize(fp));
+    t->fp = fp;
+    t->ifp = ifp;
+    bwttext_read(t);
+    chargroup_list_savereleaseall(t);
+    // sort by freq
+    r = search_range(t, p, strlen(p));
+    bwtindex_free(t);
     fclose(fp);
-
-    fp = fopen("file1.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", lzw_csize(fp, 9));
-    fclose(fp);
-
-    fp = fopen("file1.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", lzw_csize(fp, 20));
-    fclose(fp);
-
-    fp = fopen("file2.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", huffman_csize(fp));
-    fclose(fp);
-
-    fp = fopen("file2.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", lzw_csize(fp, 9));
-    fclose(fp);
-
-    fp = fopen("file2.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", lzw_csize(fp, 10));
-    fclose(fp);
-
-    fp = fopen("file3.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", huffman_csize(fp));
-    fclose(fp);
-
-    fp = fopen("file3.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", lzw_csize(fp, 9));
-    fclose(fp);
-
-    fp = fopen("file3.txt", "rb");
-    if (!fp) return 1;
-    printf("%d\n", lzw_csize(fp, 15));
-    fclose(fp);
-*/
-/*
-    FILE * fp = fopen("file1.txt", "r");
-    FILE * fout = fopen("file1.lzw", "w");
-
-    if (!fp) return 1;
-    if (!fout) return 2;
-
-    lzw_compress(fp, fout, 9);
-    //printf("%d", lzw_csize(fp, 12));
-
-    fclose(fout);
-    fclose(fp);
-*/
-
-    /*
-    int c;
-    while (c = fgetc(fp), c != EOF) printf("%d ", c);
-    rewind(fp);
-    while (c = _getsymbol(fp), c != EOF) printf("%d ", c);
-    fclose(fp);
-    */
-
-
-
-    FILE * fp;
-
-    if (argc == 3 && argv[1][0] == '-' && argv[1][1] == 'h') {
-
-        fp = fopen(argv[2], "rb");
-        if (!fp) return 1;
-        printf("%d\n", huffman_csize(fp));
-        fclose(fp);
-
-    } else if (argc > 3 && argv[1][0] == '-' && argv[1][1] == 'l') {
-
-        int w = atoi(argv[2]);
-        if (w > 8 && w < 21) {
-            // between 9 and 20
-
-            fp = fopen(argv[3], "rb");
-            if (!fp) return 1;
-            printf("%d\n", lzw_csize(fp, w));
-            fclose(fp);
-
-        }
-
-    }
-
+    fclose(ifp);
+    printf("f-l=%lu-%lu", r->first, r->last);
+    free(r);
 
     return 0;
 }

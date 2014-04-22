@@ -50,6 +50,6 @@ typedef struct {
     FILE * ifp;
 } bwttext;
 
-bwttext * bwttext_read(FILE * fp);
+void bwttext_read(bwttext * t);
 
 #endif
