@@ -8,6 +8,13 @@ chargroup_list * chargroup_list_read(FILE * fp, unsigned char c) {
     // fread
 }
 
+chargroup_list * chargroup_list_init(unsigned char c) {
+    chargroup_list * list = (chargroup_list *) malloc(sizeof(chargroup_list));
+    list->groups = exarray_init(CHARGROUP_LIST_SIZE, CHARGROUP_LIST_SIZE, sizeof(chargroup));
+    list->c = c;
+    return list;
+}
+
 void chargroup_list_write(chargroup_list * cgl, FILE * fp) {
     chargroup_list * cur;
 
@@ -62,19 +69,29 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
 }
 
 void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
-    chargroup_list * list;
 
-    list = t->chargroup_list_hash[(unsigned int) c];
+    chargroup_list * list = t->chargroup_list_hash[(unsigned int) c];
     if (list == NULL) {
-        // new char
-        list = t->chargroup_list_hash[(unsigned int) c] = chargroup_list_init();
+        list = t->chargroup_list_hash[(unsigned int) c] = chargroup_list_init(c);
         t->chargroup_list_num++;
     }
+    exarray_add(list->groups, cg);
     t->chargroup_num++;
 
-    list->info->length++;
-    // add to list->groups
-
+    if (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) {
+        // write to disk
+        int i;
+        for (i = 0; i< 256; i++) {
+            list = t->chargroup_list_hash[i];
+            if (list != NULL) {
+                exarray_save(t->ifp, list->groups);
+                exarray_free(list->groups);
+                t->chargroup_list_hash[i] = NULL;
+            }
+        }
+        t->chargroup_list_num = 0;
+        t->chargroup_num = 0;
+    }
 }
 
 void chargroup_add(bwttext * t, FILE * fp, chargroup * cg, unsigned char c) {

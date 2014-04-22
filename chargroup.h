@@ -19,9 +19,10 @@ typedef struct {
 typedef struct _chargroup_list chargroup_list;
 struct _chargroup_list {
     chargroup_listinfo * info;
-    chargroup * groups;
+    exarray * groups; // array of chargroups
     chargroup_list * next;
-    character * cp;
+    //character * cp;
+    unsigned char c;
 };
 
 
