@@ -11,7 +11,7 @@ exarray * exarray_init(
 
     exarray * a;
     exarray_node * n = (exarray_node *) malloc(sizeof(exarray_node));
-    n->arr = malloc(unit_size * initial_size);
+    n->arr = malloc(sizeof(void *) * initial_size);
     n->next = NULL;
     n->size = 0;
     n->capacity = initial_size;
@@ -25,11 +25,20 @@ exarray * exarray_init(
 }
 
 void exarray_free(exarray * a) {
+    unsigned int i;
+    void * e;
     exarray_node * t, * n = a->head;
     while (n != NULL) {
         t = n;
         n = n->next;
         // TODO specialized free function
+
+        e = t->arr;
+        for (i = 0; i < t->size; i++) {
+            free(e);
+            e++;
+        }
+
         free(t->arr);
         free(t);
     }
@@ -57,14 +66,13 @@ void exarray_add(exarray * a, const void * e) {
         n->next = NULL;
         n->size = 0;
         n->capacity = a->step_size;
-        n->arr = malloc(a->unit_size * a->step_size);
+        n->arr = malloc(sizeof(void *) * a->step_size);
 
         a->tail->next = n;
         a->tail = n;
 
     }
-    //n->arr[n->size++] = *e;
-    memcpy(&n->arr[n->size++], e, a->unit_size);
+    n->arr[n->size++] = e;
 
 }
 
@@ -77,7 +85,6 @@ void exarray_addall(exarray * a, exarray * newarray) {
     }
 }
 
-/*
 exarray_cursor * exarray_next(exarray * a, exarray_cursor * cur) {
     if (cur == NULL) {
         // the first element, because no cursor means the first access
@@ -94,7 +101,7 @@ exarray_cursor * exarray_next(exarray * a, exarray_cursor * cur) {
         cur->position++;
         cur->data++;
         return cur;
-    } else if (/ * cur->node != a->tail && * / cur->node->next != NULL) {
+    } else if (/* cur->node != a->tail && */ cur->node->next != NULL) {
         // there are nodes afterwards
         cur->node = cur->node->next;
         cur->position = 0;
@@ -106,11 +113,11 @@ exarray_cursor * exarray_next(exarray * a, exarray_cursor * cur) {
         return NULL;
     }
 }
-*/
 
 void exarray_save(exarray * a, FILE * f) {
-    unsigned int nc = 0;
+    unsigned int nc = 0, i;
     exarray_node * n;
+    void * e;
     
     n = a->head;
     while (n != NULL) {
@@ -122,7 +129,11 @@ void exarray_save(exarray * a, FILE * f) {
     n = a->head;
     while (n != NULL) {
         fwrite(&n->size, sizeof(unsigned int), 1, f);
-        fwrite(n->arr, a->unit_size, n->size, f);
+        e = n->arr;
+        for (i = 0; i < n->size; i++) {
+            fwrite(e, a->unit_size, 1, f);
+            e++;
+        }
         n = n->next;
     }
 }
@@ -132,7 +143,7 @@ exarray * exarray_load(
         unsigned int step_size,
         unsigned long unit_size) {
 
-    unsigned int nc = 0, l, i;
+    unsigned int nc = 0, l, i, j;
  
     exarray * a;
     exarray_node * n, * p = NULL;
@@ -148,8 +159,11 @@ exarray * exarray_load(
 
         n = (exarray_node *) malloc(sizeof(exarray_node));
         n->size = n->capacity = l;
-        n->arr = malloc(unit_size * l);
-        fread(n->arr, unit_size, l, f);
+        n->arr = malloc(sizeof(void *) * l);
+        for (j = 0; j < l; j++) {
+            n->arr[j] = malloc(unit_size);
+            fread(&n->arr[j], unit_size, 1, f);
+        }
 
         n->next = NULL;
         if (p == NULL) // no previous, so it's the first

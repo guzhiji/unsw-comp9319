@@ -11,7 +11,7 @@
 typedef struct _exarray_node exarray_node;
 
 struct _exarray_node {
-    void * arr;
+    void ** arr;
     unsigned int size;
     unsigned int capacity;
     exarray_node * next;
