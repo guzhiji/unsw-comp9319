@@ -57,7 +57,7 @@ unsigned long exarray_size(exarray * a);
  * adds an element into the exarray, and its capacity 
  * may increase automatically if necessary.
  */
-void exarray_add(exarray * a, const void * e);
+void exarray_add(exarray * a, void * e);
 
 /**
  * adds all elements of another exarray into an exarray

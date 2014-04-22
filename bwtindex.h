@@ -7,6 +7,7 @@
 #define _BWTINDEX_H_
 
 #include "exarray.h"
+#include "bwttext.h"
 #include <stdio.h>
 
 /********************************

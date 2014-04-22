@@ -171,11 +171,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\bwtindex.c"
+				>
+			</File>
+			<File
 				RelativePath=".\bwtsearch.c"
 				>
 			</File>
 			<File
-				RelativePath=".\hashtable.c"
+				RelativePath=".\bwttext.c"
+				>
+			</File>
+			<File
+				RelativePath=".\chargroup.c"
+				>
+			</File>
+			<File
+				RelativePath=".\exarray.c"
 				>
 			</File>
 			<File
@@ -189,7 +201,23 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\hashtable.h"
+				RelativePath=".\bwtindex.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bwtsearch.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bwttext.h"
+				>
+			</File>
+			<File
+				RelativePath=".\chargroup.h"
+				>
+			</File>
+			<File
+				RelativePath=".\exarray.h"
 				>
 			</File>
 		</Filter>

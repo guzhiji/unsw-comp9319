@@ -2,7 +2,7 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="csize" />
+		<Option title="bwtsearch" />
 		<Option pch_mode="2" />
 		<Option compiler="msvc8" />
 		<Build>
@@ -41,28 +41,29 @@
 		<Compiler>
 			<Add option="/W3" />
 		</Compiler>
+		<Unit filename="bwtindex.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="bwtindex.h" />
 		<Unit filename="bwtsearch.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="hashtable.c">
+		<Unit filename="bwtsearch.h" />
+		<Unit filename="bwttext.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="hashtable.h" />
-		<Unit filename="huffman.c">
+		<Unit filename="bwttext.h" />
+		<Unit filename="chargroup.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="huffman.h" />
-		<Unit filename="lzw.c">
+		<Unit filename="chargroup.h" />
+		<Unit filename="exarray.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="lzw.h" />
+		<Unit filename="exarray.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="symbol.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="symbol.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

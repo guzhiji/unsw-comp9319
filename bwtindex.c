@@ -109,7 +109,7 @@ void bwtindex_chargrouplist_load(bwttext * t, unsigned char c) {
 
             // read data
             fread(&posbase, sizeof(unsigned long), 1, t->ifp);
-            arr = exarray_load(t->ifp, , sizeof(bwtindex_chargroup));
+            arr = exarray_load(t->ifp, 10, sizeof(bwtindex_chargroup));
             fread(&lastsize, sizeof(unsigned int), 1, t->ifp);
 
             // add to char group list
