@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     unsigned int char_num;
     character char_table[256];
-    character * hashtable[256]; // ref to char_table elements
+    character * char_hash[256]; // ref to char_table elements
     FILE * fp;
 } bwttext;
 
@@ -24,7 +24,7 @@ void bwttext_inithashtable(bwttext * t) {
     character ** htc; // char ref to hashtable
     int c;
 
-    htc = t->hashtable;
+    htc = t->char_hash;
     c = 0;
     while (c++ < 256) {
         *htc = NULL;
@@ -39,7 +39,7 @@ void bwttext_hashchars(bwttext * t) {
     c = 0;
     cch = t->char_table;
     while (c++ < t->char_num) {
-        t->hashtable[(unsigned int) cch->c] = cch;
+        t->char_hash[(unsigned int) cch->c] = cch;
         cch++;
     }
 }
@@ -57,14 +57,14 @@ void bwttext_readbwt(bwttext * t, FILE * fp) {
     // scan the file and count character frequencies
     chobj = t->char_table;
     while ((c = fgetc(fp)) != EOF) {
-        cch = t->hashtable[c];
+        cch = t->char_hash[c];
         if (cch == NULL) {
             // not found, so it's new
 
             // temporarily hash it
             chobj->c = (unsigned char) c;
             chobj->smaller_symbols = 1; // freq
-            t->hashtable[c] = chobj;
+            t->char_hash[c] = chobj;
 
             // go to next char
             t->char_num++;
@@ -96,8 +96,7 @@ void bwttext_readbwt(bwttext * t, FILE * fp) {
 
 }
 
-
-int read_char_table(bwttext * t, FILE * fp) {
+int bwttext_chartable_read(bwttext * t, FILE * fp) {
 
     // read number of distinct chars
     t->char_num = 0; // clear first
@@ -117,13 +116,12 @@ int read_char_table(bwttext * t, FILE * fp) {
 
 }
 
-void write_char_table(bwttext * t, FILE * fp) {
+void bwttext_chartable_write(bwttext * t, FILE * fp) {
 
     fwrite(&t->char_num, sizeof(unsigned int), 1, fp);
     fwrite(t->char_table, sizeof(character), t->char_num, fp);
 
 }
-
 
 int main(int argc, char const *argv[]) {
     FILE * fp, * ifp;
