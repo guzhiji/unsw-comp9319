@@ -43,6 +43,8 @@
 
 void bwtindex_chartable_load(bwttext * t);
 
+void bwtindex_chartable_presave(bwttext * t);
+
 void bwtindex_chartable_save(bwttext * t);
 
 void bwtindex_chargrouplist_load(bwttext * t, character * ch);

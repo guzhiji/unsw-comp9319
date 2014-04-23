@@ -66,7 +66,7 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
     // TODO check truncated?
     icg = (bwtindex_chargroup *) malloc(sizeof(bwtindex_chargroup));
     icg->offset = (int) (cg->start - l->position_base);
-    icg->occ_before = ch->info->frequency;// TODO calculate occ
+    icg->occ_before = ch->info->frequency - 1;// TODO calculate occ
     exarray_add(l->groups, icg);
     l->last_chargroup_size = cg->size; // the last so far
     t->chargroup_num++;
@@ -83,6 +83,8 @@ void chargroup_list_savereleaseall(bwttext * t) {
     unsigned long * pos;
     int i;
 
+    dump_occ(t);
+    
     for (i = 0; i < 256; i++) {
         ch = t->char_hash[i];
         if (ch == NULL) continue;

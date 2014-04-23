@@ -149,6 +149,7 @@ exarray * exarray_load(
     a->unit_size = unit_size;
 
     fread(&nc, sizeof(unsigned int), 1, f);
+    if (nc < 1) return NULL;// TODO no nodes
     for (i = 0; i < nc; i++) {
         l = 0;
         fread(&l, sizeof(unsigned int), 1, f);
@@ -168,7 +169,8 @@ exarray * exarray_load(
             p->next = n;
         p = n;
     }
-    a->tail = n;
+    //a->tail = n;
+    a->tail = p;
 
     return a;
 }

@@ -5,9 +5,6 @@
 #include "chargroup.h"
 #include <stdlib.h>
 
-#define CHARGROUP_LIST_POS_SIZE_INIT 10
-#define CHARGROUP_LIST_POS_SIZE_STEP 10
-
 character * character_init(bwtindex_char * c) {
     character * chobj = (character *) malloc(sizeof(character));
 
@@ -61,15 +58,17 @@ void bwttext_read(bwttext * t) {
             cur_ch++;
             cur_cp++;
         } else {
-            cur_ch->frequency++;
+            chobj->info->frequency++;
         }
 
         // continuous chars
         if (prev_cg == NULL || prev_c != cur_c) {
             // a new char comes
-            if (prev_cg != NULL)
+            if (prev_cg != NULL) {
                 // store the prev one
+                //printf("%d: %lu, %d\n", prev_c, prev_cg->start, prev_cg->size);
                 chargroup_list_add(t, prev_c, prev_cg);
+            }
             // re-initialize chargroup for the new char
             prev_cg = (chargroup *) malloc(sizeof(chargroup));
             prev_cg->start = pos;
@@ -109,15 +108,21 @@ void bwttext_read(bwttext * t) {
 }
 
 bwttext * bwttext_init(char * bwtfile, char * indexfile) {
+    int i;
     bwttext * t = (bwttext *) malloc(sizeof(bwttext));
 
     t->fp = fopen(bwtfile, "rb");
-    t->ifp = fopen(indexfile, "wrb");
+    t->ifp = fopen(indexfile, "wb");
     t->char_num = 0;
     t->chargroup_num = 0;
     t->chargroup_list_num = 0;
     fread(&t->end_position, sizeof(unsigned int), 1, t->fp);
-    
+
+    for (i = 0; i < 256; i++) {
+        t->char_hash[i] = NULL;
+        t->chargroup_list_sorted[i] = NULL;
+    }
+
     return t;
 }
 

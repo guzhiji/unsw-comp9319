@@ -1,6 +1,7 @@
 
 #include "bwttext.h"
 #include "bwtsearch.h"
+#include "bwtindex.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,8 +10,15 @@
 int main(int argc, char **argv) {
     bwttext * t;
     fpos_range * r;
-    unsigned char * p = "peach";
-
+    char * p = "peach";
+/*
+h 167 169
+c 137 139
+a 108 109
+e 149 150
+p 211 212
+found
+ */
     //t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx");
     t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx");
 
@@ -21,6 +29,7 @@ int main(int argc, char **argv) {
     // OR
     //bwtindex_chartable_load(t);
     //}
+    //decode(t);
 
     r = search_range(t, p, strlen(p));
     // reverse

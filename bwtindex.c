@@ -27,7 +27,9 @@ void bwtindex_chartable_load(bwttext * t) {
         // chargroup list
         chobj->grouplist = NULL;
         chobj->chargroup_list_positions = exarray_load(
-                t->ifp,10 , sizeof(unsigned long));
+                t->ifp,
+                CHARGROUP_LIST_POS_SIZE_STEP,
+                sizeof(unsigned long));
         // smaller symbols for the C[] table
         chobj->smaller_symbols = smaller;
         smaller += cch->frequency;
@@ -93,8 +95,10 @@ void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
         // add to char group list
         if (chobj->grouplist == NULL)
             chobj->grouplist = chargroup_list_init(posbase);
-        exarray_addall(chobj->grouplist->groups, arr);
-        free(arr);
+        if (arr != NULL) {
+            exarray_addall(chobj->grouplist->groups, arr);
+            free(arr);
+        }
         chobj->grouplist->last_chargroup_size = lastsize;
 
     }
