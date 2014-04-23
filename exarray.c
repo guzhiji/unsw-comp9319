@@ -40,6 +40,7 @@ unsigned long exarray_free(exarray * a) {
 
         free(t->arr);
         free(t);
+
     }
     free(a);
     return l;

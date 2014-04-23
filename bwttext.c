@@ -116,7 +116,8 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile) {
     t->char_num = 0;
     t->chargroup_num = 0;
     t->chargroup_list_num = 0;
-
+    fread(&t->end_position, sizeof(unsigned int), 1, t->fp);
+    
     return t;
 }
 

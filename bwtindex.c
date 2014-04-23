@@ -1,5 +1,6 @@
 
 #include "bwtindex.h"
+#include "bwttext.h"
 #include "chargroup.h"
 #include "exarray.h"
 #include <stdlib.h>
@@ -85,7 +86,7 @@ void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
         // read data
         posbase = 0;
         fread(&posbase, sizeof(unsigned long), 1, t->ifp);
-        arr = exarray_load(t->ifp, 10, sizeof(bwtindex_chargroup));
+        arr = exarray_load(t->ifp, CHARGROUP_LIST_SIZE_STEP, sizeof(bwtindex_chargroup));
         lastsize = 0;
         fread(&lastsize, sizeof(unsigned int), 1, t->ifp);
 

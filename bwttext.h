@@ -46,6 +46,7 @@ typedef struct {
     chargroup_list * chargroup_list_sorted[256];
     unsigned long chargroup_num; // up to CHARGROUP_NUM_THRESHOLD
     unsigned int chargroup_list_num; // number of lists loaded
+    unsigned int end_position;
     FILE * fp;
     FILE * ifp;
 } bwttext;

@@ -9,23 +9,24 @@
 int main(int argc, char **argv) {
     bwttext * t;
     fpos_range * r;
-    unsigned char * p = "abcd";
+    unsigned char * p = "peach";
 
-    t = bwttext_init("../tests/tiny.bwt", "tiny.idx");
+    //t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx");
+    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx");
 
     //{
     bwtindex_chartable_presave(t);
     bwttext_read(t);
     bwtindex_chartable_save(t);
     // OR
-    bwtindex_chartable_load(t);
+    //bwtindex_chartable_load(t);
     //}
 
     r = search_range(t, p, strlen(p));
     // reverse
     bwttext_free(t);
-
-    printf("f-l=%lu-%lu", r->first, r->last);
+    if (r != NULL)
+        printf("f-l=%lu-%lu", r->first, r->last);
     free(r);
 
     return 0;

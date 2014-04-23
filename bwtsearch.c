@@ -20,12 +20,14 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
     x = p[pp];
 
     c = t->char_hash[(unsigned int) x];
+    if (c == NULL) return NULL;
     r->first = c->smaller_symbols;
     r->last = r->first + c->info->frequency - 1;
 
     while (r->first <= r->last && pp > 0) {
         x = p[--pp];
         c = t->char_hash[(unsigned int) x];
+        if (c == NULL) return NULL;
         r->first = c->smaller_symbols + occ(t, x, r->first);
         r->last = c->smaller_symbols + occ(t, x, r->last + 1) - 1;
     }

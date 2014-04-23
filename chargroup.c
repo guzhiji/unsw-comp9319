@@ -52,7 +52,7 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
 void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
     character * ch;
     chargroup_list * l;
-    bwtindex_chargroup icg;
+    bwtindex_chargroup * icg;
 
     // get the chargroup list for the char c
     ch = t->char_hash[(unsigned int) c];
@@ -64,9 +64,10 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
 
     // add the chargroup
     // TODO check truncated?
-    icg.offset = (int) (cg->start - l->position_base);
-    icg.occ_before = ch->info->frequency;// TODO calculate occ
-    exarray_add(l->groups, &icg);
+    icg = (bwtindex_chargroup *) malloc(sizeof(bwtindex_chargroup));
+    icg->offset = (int) (cg->start - l->position_base);
+    icg->occ_before = ch->info->frequency;// TODO calculate occ
+    exarray_add(l->groups, icg);
     l->last_chargroup_size = cg->size; // the last so far
     t->chargroup_num++;
 
@@ -79,25 +80,29 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
 void chargroup_list_savereleaseall(bwttext * t) {
     character * ch;
     chargroup_list * l;
+    unsigned long * pos;
     int i;
 
     for (i = 0; i < 256; i++) {
         ch = t->char_hash[i];
+        if (ch == NULL) continue;
         l = ch->grouplist;
-        if (l != NULL) {
+        if (l == NULL) continue;
 
-            // save data
-            bwtindex_chargrouplist_save(l, t->ifp);
-            //fwrite(&l->position_base, sizeof(unsigned long), 1, t->ifp);
-            //exarray_save(t->ifp, l->groups);
-            //fwrite(&l->last_chargroup_size, sizeof(unsigned int), 1, t->ifp);
+        // save data
+        pos = (unsigned long *) malloc(sizeof(unsigned long));
+        *pos = ftell(t->ifp);
+        exarray_add(ch->chargroup_list_positions, pos);
+        bwtindex_chargrouplist_save(l, t->ifp);
+        //fwrite(&l->position_base, sizeof(unsigned long), 1, t->ifp);
+        //exarray_save(t->ifp, l->groups);
+        //fwrite(&l->last_chargroup_size, sizeof(unsigned int), 1, t->ifp);
 
-            // release resources
-            exarray_free(l->groups);
-            free(l);
-            ch->grouplist = NULL;
+        // release resources
+        exarray_free(l->groups);
+        free(l);
+        ch->grouplist = NULL;
 
-        }
     }
     //t->chargroup_list_num = 0;
     t->chargroup_num = 0;
