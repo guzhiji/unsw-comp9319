@@ -1,7 +1,11 @@
 
 #include "chargroup.h"
+
 #include "exarray.h"
+#include "bwttext.h"
+#include "bwtindex.h"
 #include <stdlib.h>
+
 
 chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
     unsigned int i;
@@ -23,7 +27,7 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
         // load the chargroup list for c from index file
 
         bwtindex_chargrouplist_load(t, ch);
-        t->chargroup_num += chargroup_list_size(ch->grouplist);
+        t->chargroup_num += exarray_size(ch->grouplist->groups);
 
         // insert the new list by frequency
 
@@ -104,16 +108,18 @@ chargroup_list * chargroup_list_init(unsigned long base) {
     chargroup_list * l = (chargroup_list *) malloc(sizeof(chargroup_list));
     l->position_base = base;
     l->last_chargroup_size = 0;
-    l->groups = exarray_init(10, 10, sizeof(bwtindex_chargroup));
+    l->groups = exarray_init(
+            CHARGROUP_LIST_SIZE_INIT,
+            CHARGROUP_LIST_SIZE_STEP,
+            sizeof(bwtindex_chargroup));
     return l;
 
 }
 
-unsigned int chargroup_list_size(chargroup_list * l) {
-}
-
-unsigned int chargroup_list_free(chargroup_list * l) {
-    exarray_free(l->groups);
+unsigned long chargroup_list_free(chargroup_list * l) {
+    unsigned long s;
+    s = exarray_free(l->groups);
     free(l);
+    return s;
 }
 

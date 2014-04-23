@@ -46,7 +46,7 @@ exarray * exarray_init(
 /**
  * correctly releases resources used the exarray.
  */
-void exarray_free(exarray * a);
+unsigned long exarray_free(exarray * a);
 
 /**
  * calculates the total number of elements in the exarray.

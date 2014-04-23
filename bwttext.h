@@ -50,6 +50,15 @@ typedef struct {
     FILE * ifp;
 } bwttext;
 
+character * character_init(bwtindex_char * c);
+
+void character_free(character * c);
+
+bwttext * bwttext_init(char * bwtfile, char * indexfile);
+
 void bwttext_read(bwttext * t);
 
+void bwttext_free(bwttext * t);
+
 #endif
+

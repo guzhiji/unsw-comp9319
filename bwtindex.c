@@ -4,28 +4,6 @@
 #include "exarray.h"
 #include <stdlib.h>
 
-void bwtindex_chartable_init(bwttext * t) {
-
-    t->char_num = 0;
-}
-
-void bwtindex_free(bwttext * t) {
-    character * chobj;
-    unsigned int i;
-
-    // release characters
-    for (i = 0; i < 256; i++) {
-        chobj = t->char_hash[i];
-        if (chobj == NULL) continue;
-        exarray_free(chobj->chargroup_list_positions);
-        if (chobj->grouplist != NULL)
-            chargroup_list_free(chobj->grouplist);
-        free(chobj);
-    }
-    t->char_num = 0;
-
-}
-
 void bwtindex_chartable_load(bwttext * t) {
 
     unsigned long startpos = 0, smaller;
@@ -59,6 +37,11 @@ void bwtindex_chartable_load(bwttext * t) {
         cch++;
     }
 
+}
+
+void bwtindex_chartable_presave(bwttext * t) {
+    unsigned long startpos = 0;
+    fwrite(&startpos, sizeof(unsigned long), 1, t->ifp);
 }
 
 void bwtindex_chartable_save(bwttext * t) {

@@ -7,21 +7,24 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-    FILE * fp = fopen("tests/tiny.bwt", "rb");
-    FILE * ifp = fopen("tiny.idx", "wrb");
-    bwttext * t = (bwttext *) malloc(sizeof(bwttext));
+    bwttext * t;
     fpos_range * r;
     unsigned char * p = "abcd";
 
-    t->fp = fp;
-    t->ifp = ifp;
+    t = bwttext_init("../tests/tiny.bwt", "tiny.idx");
+
+    //{
+    bwtindex_chartable_presave(t);
     bwttext_read(t);
-    chargroup_list_savereleaseall(t);
-    // sort by freq
+    bwtindex_chartable_save(t);
+    // OR
+    bwtindex_chartable_load(t);
+    //}
+
     r = search_range(t, p, strlen(p));
-    bwtindex_free(t);
-    fclose(fp);
-    fclose(ifp);
+    // reverse
+    bwttext_free(t);
+
     printf("f-l=%lu-%lu", r->first, r->last);
     free(r);
 

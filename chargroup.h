@@ -11,6 +11,9 @@
 #define CHARGROUP_NUM_THRESHOLD 196608
 #define CHARGROUP_NUM_KEEP 98304
 
+#define CHARGROUP_LIST_SIZE_INIT 10
+#define CHARGROUP_LIST_SIZE_STEP 10
+
 /**
  * get a char group list.
  *
@@ -34,8 +37,6 @@ chargroup_list * chargroup_list_init(unsigned long base);
 
 void chargroup_list_savereleaseall(bwttext * t);
 
-unsigned int chargroup_list_size(chargroup_list * l);
-
-unsigned int chargroup_list_free(chargroup_list * l);
+unsigned long chargroup_list_free(chargroup_list * l);
 
 #endif

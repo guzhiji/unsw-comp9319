@@ -24,10 +24,13 @@ exarray * exarray_init(
     return a;
 }
 
-void exarray_free(exarray * a) {
+unsigned long exarray_free(exarray * a) {
     unsigned int i;
+    unsigned long l = 0;
     exarray_node * t, * n = a->head;
     while (n != NULL) {
+        l += n->size;
+
         t = n;
         n = n->next;
         // TODO specialized free function
@@ -39,6 +42,7 @@ void exarray_free(exarray * a) {
         free(t);
     }
     free(a);
+    return l;
 }
 
 unsigned long exarray_size(exarray * a) {

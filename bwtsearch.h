@@ -6,6 +6,8 @@
 #ifndef _BWTSEARCH_H_
 #define _BWTSEARCH_H_
 
+#include "bwttext.h"
+
 typedef struct {
     unsigned long first;
     unsigned long last;
