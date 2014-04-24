@@ -19,8 +19,8 @@ e 149 150
 p 211 212
 found
  */
-    //t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx");
-    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx");
+    t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx");
+    //t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx");
 
     //{
     bwtindex_chartable_presave(t);

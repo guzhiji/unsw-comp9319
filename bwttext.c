@@ -47,7 +47,7 @@ void bwttext_read(bwttext * t) {
     pos = 0;
     while ((c = fgetc(t->fp)) != EOF) {
         cur_c = (unsigned char) c;
-
+        
         // char frequency
         chobj = t->char_hash[c];
         if (chobj == NULL) {
@@ -112,7 +112,7 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile) {
     bwttext * t = (bwttext *) malloc(sizeof(bwttext));
 
     t->fp = fopen(bwtfile, "rb");
-    t->ifp = fopen(indexfile, "wb");
+    t->ifp = fopen(indexfile, "w+b");
     t->char_num = 0;
     t->chargroup_num = 0;
     t->chargroup_list_num = 0;
@@ -120,7 +120,7 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile) {
 
     for (i = 0; i < 256; i++) {
         t->char_hash[i] = NULL;
-        t->chargroup_list_sorted[i] = NULL;
+        t->char_freqsorted[i] = NULL;
     }
 
     return t;

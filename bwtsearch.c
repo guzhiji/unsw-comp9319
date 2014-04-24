@@ -71,8 +71,8 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
     unsigned int pp;
     unsigned char x;
 
-    dump_chartable(t);
-    dump_pos(t);
+    //dump_chartable(t);
+    //dump_pos(t);
     
     r = (fpos_range *) malloc(sizeof(fpos_range));
 
@@ -104,11 +104,14 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     chargroup_list * list = chargroup_list_get(t, c);
     exarray_cursor * cur = NULL;
     bwtindex_chargroup * cg, * pcg = NULL;
-
+    //printf("occ> -------------------\n");
     while ((cur = exarray_next(list->groups, cur)) != NULL) {
         cg = (bwtindex_chargroup *) cur->data;
-        if (pos < list->position_base + cg->offset)
-            return pcg == NULL ? 0 : pcg->occ_before + pos - (list->position_base - pcg->offset);
+        //printf("occ> pos: cur %lu, begin %lu\n", pos, list->position_base + cg->offset);
+        //printf("occ> occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
+        if (pos < list->position_base + cg->offset) {
+            return pcg == NULL ? 0 : pcg->occ_before + pos - (list->position_base + pcg->offset);
+        }
         pcg = cg;
     }
     return list->last_chargroup_size;
