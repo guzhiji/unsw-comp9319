@@ -19,9 +19,8 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
 
         /* while (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) { */
         while (t->chargroup_num >= CHARGROUP_NUM_KEEP) {
-            t->chargroup_num -= chargroup_list_free(
-                    t->chargroup_list_sorted[
-                        --t->chargroup_list_num]);
+            l = t->char_freqsorted[--t->chargroup_list_num]->grouplist;
+            t->chargroup_num -= chargroup_list_free(l);
         }
 
         // load the chargroup list for c from index file
@@ -34,12 +33,13 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
         i = t->chargroup_list_num++; // point to the one after the last
                                      // and increment count
         while (1) {
-            if (i >= 1 && t->char_hash[i - 1]->info->frequency < ch->info->frequency) {
+            if (i >= 1 && t->char_freqsorted[i - 1]->info->frequency < ch->info->frequency) {
                 // push i-1 to i
-                t->chargroup_list_sorted[i] = t->chargroup_list_sorted[--i];
+                t->char_freqsorted[i] = t->char_freqsorted[i-1];
+                i--;
             } else {
                 // insert at i
-                t->chargroup_list_sorted[i] = ch->grouplist;
+                t->char_freqsorted[i] = ch;
                 break;
             }
         }
@@ -61,12 +61,12 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
         l = ch->grouplist = chargroup_list_init(cg->start);
         //t->chargroup_list_num++;
     }
-
+    
     // add the chargroup
     // TODO check truncated?
     icg = (bwtindex_chargroup *) malloc(sizeof(bwtindex_chargroup));
     icg->offset = (int) (cg->start - l->position_base);
-    icg->occ_before = ch->info->frequency - 1;// TODO calculate occ
+    icg->occ_before = ch->info->frequency - cg->size;
     exarray_add(l->groups, icg);
     l->last_chargroup_size = cg->size; // the last so far
     t->chargroup_num++;
@@ -83,7 +83,7 @@ void chargroup_list_savereleaseall(bwttext * t) {
     unsigned long * pos;
     int i;
 
-    dump_occ(t);
+    //dump_occ(t);
     
     for (i = 0; i < 256; i++) {
         ch = t->char_hash[i];
@@ -94,6 +94,7 @@ void chargroup_list_savereleaseall(bwttext * t) {
         // save data
         pos = (unsigned long *) malloc(sizeof(unsigned long));
         *pos = ftell(t->ifp);
+        //printf("put file pos = %lu\n", *pos);
         exarray_add(ch->chargroup_list_positions, pos);
         bwtindex_chargrouplist_save(l, t->ifp);
         //fwrite(&l->position_base, sizeof(unsigned long), 1, t->ifp);

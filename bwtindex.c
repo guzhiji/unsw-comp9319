@@ -83,6 +83,7 @@ void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
 
         // find the position of the chargroup list
         pos = (unsigned long *) cur->data;
+        //printf("get file pos = %lu\n", *pos);
         fseek(t->ifp, *pos, SEEK_SET);
 
         // read data

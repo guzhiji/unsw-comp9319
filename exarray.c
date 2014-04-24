@@ -81,8 +81,15 @@ void exarray_add(exarray * a, void * e) {
 void exarray_addall(exarray * a, exarray * newarray) {
     // more specifically, element types should be consistent
     if (a->unit_size == newarray->unit_size) {
-        a->tail->next = newarray->head;
-        a->tail = newarray->tail;
+        if (a->head->size > 0) {
+            a->tail->next = newarray->head;
+            a->tail = newarray->tail;
+        } else { // TODO it's just a tweak and should be changed
+            free(a->head->arr);
+            free(a->head);
+            a->head = newarray->head;
+            a->tail = newarray->tail;
+        }
     }
 }
 
