@@ -40,6 +40,4 @@ chargroup_list * chargroup_list_init();
 
 void chargroup_list_savereleaseall(bwttext * t);
 
-unsigned long chargroup_list_free(chargroup_list * l);
-
 #endif

@@ -19,8 +19,10 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
 
         /* while (t->chargroup_num >= CHARGROUP_NUM_THRESHOLD) { */
         while (t->chargroup_num >= CHARGROUP_NUM_KEEP) {
-            l = t->char_freqsorted[--t->chargroup_list_num]->grouplist;
-            t->chargroup_num -= chargroup_list_free(l);
+            i = --t->chargroup_list_num;
+            t->chargroup_num -= exarray_free(t->char_freqsorted[i]->grouplist->groups);
+            free(t->char_freqsorted[i]->grouplist);
+            t->char_freqsorted[i]->grouplist = NULL;
         }
 
         // load the chargroup list for c from index file
@@ -45,7 +47,9 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
         }
 
     }
-
+if(exarray_size(ch->grouplist->groups)==0) {
+    printf("loaded a grouplist of size 0\n");
+}
     return ch->grouplist;
 }
 
@@ -117,11 +121,3 @@ chargroup_list * chargroup_list_init() {
     return l;
 
 }
-
-unsigned long chargroup_list_free(chargroup_list * l) {
-    unsigned long s;
-    s = exarray_free(l->groups);
-    free(l);
-    return s;
-}
-

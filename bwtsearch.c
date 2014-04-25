@@ -58,6 +58,13 @@ void dump_pos(bwttext * t) {
             printf("%lu;", *p);
         }
         printf("\n");
+        
+        bwtindex_chargrouplist_load(t, ch);
+        cur = NULL;
+        while ((cur = exarray_next(ch->grouplist->groups, cur)) != NULL) {
+            bwtindex_chargroup * cg = (bwtindex_chargroup *) cur->data;
+            
+        }
 
     }
     printf("==================\n");
@@ -100,7 +107,10 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 
 //TODO use bsearch
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
-    chargroup_list * list = chargroup_list_get(t, c);
+    chargroup_list * list = chargroup_list_get(t, c);if (list->groups->head==NULL) {
+        fprintf(stderr, "%c(%d): pos %lu, couldn't get any groups\n", c,c,pos);
+        //exit(1);
+    }
     exarray_cursor * cur = NULL;
     bwtindex_chargroup * cg, * pcg = NULL;
     //printf("occ> -------------------\n");
@@ -113,14 +123,12 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         }
         */
         if (pos < cg->offset) {
-            unsigned long r= pcg == NULL ? 0 : pcg->occ_before + pos - pcg->offset;
-            return r;
+            return pcg == NULL ? 0 : pcg->occ_before + pos - pcg->offset;
         }
         pcg = cg;
     }
     if (pcg!=NULL) {
-        unsigned long r= pcg->occ_before + pos - pcg->offset;
-        return r;
+        return pcg->occ_before + pos - pcg->offset;
     }
     return 0;
 

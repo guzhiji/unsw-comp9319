@@ -20,12 +20,12 @@ character * character_init(bwtindex_char * c) {
 }
 
 void character_free(character * c) {
-
     exarray_free(c->chargroup_list_positions);
-    if (c->grouplist != NULL)
-        chargroup_list_free(c->grouplist);
+    if (c->grouplist != NULL) {
+        exarray_free(c->grouplist->groups);
+        free(c->grouplist);
+    }
     free(c);
-
 }
 
 int cmp_char(const void * c1, const void * c2) {

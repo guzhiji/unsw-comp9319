@@ -93,6 +93,10 @@ void exarray_addall(exarray * a, exarray * newarray) {
             a->tail = newarray->tail;
         }
     }
+    if (newarray->head == NULL) {
+        fprintf(stderr, "null head in new array\n");
+        //exit(1);
+    }
 }
 
 exarray_cursor * exarray_next(exarray * a, exarray_cursor * cur) {
@@ -160,7 +164,7 @@ exarray * exarray_load(
     fread(&nc, sizeof(unsigned int), 1, f);
     if (nc < 1) {
         fprintf(stderr, "error");
-        return NULL;// TODO no nodes
+        exit(1);
     }
     for (i = 0; i < nc; i++) {
         l = 0;
