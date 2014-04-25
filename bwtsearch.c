@@ -107,34 +107,44 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     //printf("occ> -------------------\n");
     while ((cur = exarray_next(list->groups, cur)) != NULL) {
         cg = (bwtindex_chargroup *) cur->data;
-        //printf("occ> pos: cur %lu, begin %lu\n", pos, list->position_base + cg->offset);
-        //printf("occ> occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
+        if (c == '3' && pos >= 488261 && list->position_base==1463) {
+            printf("occ> pos: cur %lu, begin %lu\n", pos, list->position_base + cg->offset);
+            printf("         occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
+        }
         if (pos < list->position_base + cg->offset) {
-            return pcg == NULL ? 0 : pcg->occ_before + pos - (list->position_base + pcg->offset);
+            unsigned long r= pcg == NULL ? 0 : pcg->occ_before + pos - (list->position_base + pcg->offset);
+            return r;
         }
         pcg = cg;
     }
-    return list->last_chargroup_size;
+    if (pcg!=NULL) {
+        unsigned long r= pcg->occ_before + pos - (list->position_base + pcg->offset);
+        return r;
+    }
+    //TODO remove last size
+    //return list->last_chargroup_size;
+    return 0;
 
 }
 
-void decode(bwttext * t) {
+void decode_backword(bwttext * t) {
     unsigned char c;
     character * ch;
     unsigned long p = t->end_position;
-
+    //int i=0;
     do {
-        printf("\npos: %lu, ", p);
+        //printf("\ni: %d, pos: %lu, ", i, p);
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        printf("char=%d, ", c);
-        putchar(c);
+        //printf("char=%d, ", c);
+        putchar(c);//if (i==5) break;
         ch = t->char_hash[(unsigned int) c];
         if (ch == NULL) {
             printf("\nerror: %d\n", c);
             break; // error
         }
-        p = ch->smaller_symbols + occ(t, ch->info->c, p);
+        p = ch->smaller_symbols + occ(t, c, p);//i++;
     } while (p != t->end_position);
+    printf("\n");
     
 }

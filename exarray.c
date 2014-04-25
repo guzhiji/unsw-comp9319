@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <stdio.h>
+
 exarray * exarray_init(
         unsigned int initial_size,
         unsigned int step_size,
@@ -156,7 +158,10 @@ exarray * exarray_load(
     a->unit_size = unit_size;
 
     fread(&nc, sizeof(unsigned int), 1, f);
-    if (nc < 1) return NULL;// TODO no nodes
+    if (nc < 1) {
+        fprintf(stderr, "error");
+        return NULL;// TODO no nodes
+    }
     for (i = 0; i < nc; i++) {
         l = 0;
         fread(&l, sizeof(unsigned int), 1, f);

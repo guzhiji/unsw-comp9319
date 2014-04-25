@@ -20,7 +20,6 @@ void bwtindex_chartable_load(bwttext * t) {
     t->char_num = len;
     fread(t->char_table, sizeof(bwtindex_char), len, t->ifp);
 
-    smaller = 0;
     cch = t->char_table;
     for (i = 0; i < len; i++) {
         chobj = (character *) malloc(sizeof(character));
@@ -30,14 +29,21 @@ void bwtindex_chartable_load(bwttext * t) {
                 t->ifp,
                 CHARGROUP_LIST_POS_SIZE_STEP,
                 sizeof(unsigned long));
-        // smaller symbols for the C[] table
-        chobj->smaller_symbols = smaller;
-        smaller += cch->frequency;
         // get associated
         chobj->info = cch;
         t->char_hash[(unsigned int) cch->c] = chobj; // for faster access
         // next char
         cch++;
+    }
+    
+    // smaller symbols for the C[] table
+    // chars are naturally sorted after hashed in char_hash
+    smaller = 0;
+    for (i = 0; i < 256; i++) {
+        chobj = t->char_hash[i];
+        if (chobj == NULL) continue;
+        chobj->smaller_symbols = smaller;
+        smaller += chobj->info->frequency;
     }
 
 }
