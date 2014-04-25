@@ -32,12 +32,10 @@
  ********************************
  * CharGroup list:
  * ...
- * [char pos base]
  * [exarray
  *      [bwtindex_chargroup]
  *      ...
  * ]
- * [last chargroup size]
  * ...
  ********************************/
 

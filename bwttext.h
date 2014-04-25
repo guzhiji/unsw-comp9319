@@ -16,8 +16,8 @@ typedef struct {
 } bwtindex_char;
 
 typedef struct {
-    unsigned long position_base; // + offset = real position
-    unsigned int last_chargroup_size; // for checking boundary
+    //unsigned long position_base; // + offset = real position
+    //unsigned int last_chargroup_size; // for checking boundary
     exarray * groups; // bwtindex_chargroup
 } chargroup_list;
 
@@ -31,11 +31,11 @@ typedef struct {
 
 typedef struct {
     unsigned long start;
-    unsigned int size;
+    unsigned long size;
 } chargroup;
 
 typedef struct {
-    unsigned int offset;
+    unsigned long offset;
     unsigned long occ_before;
 } bwtindex_chargroup;
 
@@ -46,7 +46,7 @@ typedef struct {
     character * char_freqsorted[256];
     unsigned long chargroup_num; // up to CHARGROUP_NUM_THRESHOLD
     unsigned int chargroup_list_num; // number of lists loaded
-    unsigned int end_position;
+    unsigned long end_position;
     FILE * fp;
     FILE * ifp;
 } bwttext;
@@ -55,7 +55,7 @@ character * character_init(bwtindex_char * c);
 
 void character_free(character * c);
 
-bwttext * bwttext_init(char * bwtfile, char * indexfile);
+bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex);
 
 void bwttext_read(bwttext * t);
 

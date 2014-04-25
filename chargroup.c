@@ -58,21 +58,16 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
     ch = t->char_hash[(unsigned int) c];
     l = ch->grouplist;
     if (l == NULL) {
-        l = ch->grouplist = chargroup_list_init(cg->start);
+        l = ch->grouplist = chargroup_list_init();
         //t->chargroup_list_num++;
     }
     
     // add the chargroup
     // TODO check truncated?
     icg = (bwtindex_chargroup *) malloc(sizeof(bwtindex_chargroup));
-    if (c == '3') {
-        printf("start-base=%lu - %lu=%lu\n", cg->start, l->position_base,cg->start - l->position_base);
-        printf("occ=cfreq-cgsize=%lu - %lu=%lu\n", ch->info->frequency, cg->size, ch->info->frequency - cg->size);
-    }
-    icg->offset = (unsigned int) (cg->start - l->position_base);
+    icg->offset = cg->start;
     icg->occ_before = ch->info->frequency - cg->size;
     exarray_add(l->groups, icg);
-    l->last_chargroup_size = cg->size; // the last so far
     t->chargroup_num++;
 
     // write to disk if memory usage is over threshold
@@ -101,9 +96,6 @@ void chargroup_list_savereleaseall(bwttext * t) {
         //printf("put file pos = %lu\n", *pos);
         exarray_add(ch->chargroup_list_positions, pos);
         bwtindex_chargrouplist_save(l, t->ifp);
-        //fwrite(&l->position_base, sizeof(unsigned long), 1, t->ifp);
-        //exarray_save(t->ifp, l->groups);
-        //fwrite(&l->last_chargroup_size, sizeof(unsigned int), 1, t->ifp);
 
         // release resources
         exarray_free(l->groups);
@@ -115,11 +107,9 @@ void chargroup_list_savereleaseall(bwttext * t) {
     t->chargroup_num = 0;
 }
 
-chargroup_list * chargroup_list_init(unsigned long base) {
+chargroup_list * chargroup_list_init() {
 
     chargroup_list * l = (chargroup_list *) malloc(sizeof(chargroup_list));
-    l->position_base = base;
-    l->last_chargroup_size = 0;
     l->groups = exarray_init(
             CHARGROUP_LIST_SIZE_INIT,
             CHARGROUP_LIST_SIZE_STEP,

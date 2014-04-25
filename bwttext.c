@@ -75,7 +75,7 @@ void bwttext_read(bwttext * t) {
             prev_cg->size = 1;
             prev_c = cur_c;
         } else {
-            prev_cg->size++;// TODO size may overflow
+            prev_cg->size++;
         }
 
         pos++;
@@ -107,19 +107,17 @@ void bwttext_read(bwttext * t) {
 
 }
 
-bwttext * bwttext_init(char * bwtfile, char * indexfile) {
+bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex) {
     int i;
     bwttext * t = (bwttext *) malloc(sizeof(bwttext));
 
     t->fp = fopen(bwtfile, "rb");
-    t->ifp = fopen(indexfile, "w+b");
-/*
-    t->ifp = fopen(indexfile, "r");
-*/
+    t->ifp = fopen(indexfile, buildindex ? "w+b" : "r");
+
     t->char_num = 0;
     t->chargroup_num = 0;
     t->chargroup_list_num = 0;
-    fread(&t->end_position, sizeof(unsigned int), 1, t->fp);
+    fread(&t->end_position, sizeof(unsigned long), 1, t->fp);
 
     for (i = 0; i < 256; i++) {
         t->char_hash[i] = NULL;

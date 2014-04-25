@@ -34,9 +34,8 @@ void dump_occ(bwttext * t) {
         cur = NULL;
         while ((cur = exarray_next(ch->grouplist->groups, cur)) != NULL) {
             bwtindex_chargroup * cg = (bwtindex_chargroup *) cur->data;
-            printf("%lu (%lu, %d): %lu\n", ch->grouplist->position_base + cg->offset, ch->grouplist->position_base, cg->offset, cg->occ_before);
+            printf("(start: %lu, occ: %lu)\n", cg->offset, cg->occ_before);
         }
-        printf("last size = %d\n", ch->grouplist->last_chargroup_size);
 
     }
     printf("==================\n");
@@ -107,22 +106,20 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     //printf("occ> -------------------\n");
     while ((cur = exarray_next(list->groups, cur)) != NULL) {
         cg = (bwtindex_chargroup *) cur->data;
-        if (c == '3' && pos >= 488261 && list->position_base==1463) {
-            printf("occ> pos: cur %lu, begin %lu\n", pos, list->position_base + cg->offset);
+        if (c == '3' && pos >= 488261) {
+            printf("occ> pos: cur %lu, begin %lu\n", pos, cg->offset);
             printf("         occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
         }
-        if (pos < list->position_base + cg->offset) {
-            unsigned long r= pcg == NULL ? 0 : pcg->occ_before + pos - (list->position_base + pcg->offset);
+        if (pos < cg->offset) {
+            unsigned long r= pcg == NULL ? 0 : pcg->occ_before + pos - pcg->offset;
             return r;
         }
         pcg = cg;
     }
     if (pcg!=NULL) {
-        unsigned long r= pcg->occ_before + pos - (list->position_base + pcg->offset);
+        unsigned long r= pcg->occ_before + pos - pcg->offset;
         return r;
     }
-    //TODO remove last size
-    //return list->last_chargroup_size;
     return 0;
 
 }

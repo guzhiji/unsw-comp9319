@@ -35,7 +35,7 @@ found
 /*
     t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx");
 */
-    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx");
+    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
 
     //{
     bwtindex_chartable_presave(t);

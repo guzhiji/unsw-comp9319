@@ -36,7 +36,7 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg);
 /**
  * initialize a chargroup list
  */
-chargroup_list * chargroup_list_init(unsigned long base);
+chargroup_list * chargroup_list_init();
 
 void chargroup_list_savereleaseall(bwttext * t);
 

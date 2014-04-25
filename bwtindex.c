@@ -81,8 +81,6 @@ void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
     exarray_cursor * cur;
     exarray * arr;
     unsigned long * pos;
-    unsigned long posbase;
-    unsigned int lastsize;
 
     cur = NULL;
     while ((cur = exarray_next(chobj->chargroup_list_positions, cur)) != NULL) {
@@ -93,20 +91,15 @@ void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
         fseek(t->ifp, *pos, SEEK_SET);
 
         // read data
-        posbase = 0;
-        fread(&posbase, sizeof(unsigned long), 1, t->ifp);
         arr = exarray_load(t->ifp, CHARGROUP_LIST_SIZE_STEP, sizeof(bwtindex_chargroup));
-        lastsize = 0;
-        fread(&lastsize, sizeof(unsigned int), 1, t->ifp);
 
         // add to char group list
         if (chobj->grouplist == NULL)
-            chobj->grouplist = chargroup_list_init(posbase);
+            chobj->grouplist = chargroup_list_init();
         if (arr != NULL) {
             exarray_addall(chobj->grouplist->groups, arr);
             free(arr);
         }
-        chobj->grouplist->last_chargroup_size = lastsize;
 
     }
 
@@ -114,9 +107,7 @@ void bwtindex_chargrouplist_load(bwttext * t, character * chobj) {
 
 void bwtindex_chargrouplist_save(chargroup_list * l, FILE * f) {
 
-    fwrite(&l->position_base, sizeof(unsigned long), 1, f);
     exarray_save(l->groups, f);
-    fwrite(&l->last_chargroup_size, sizeof(unsigned int), 1, f);
 
 }
 
