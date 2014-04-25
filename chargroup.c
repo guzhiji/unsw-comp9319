@@ -65,7 +65,11 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
     // add the chargroup
     // TODO check truncated?
     icg = (bwtindex_chargroup *) malloc(sizeof(bwtindex_chargroup));
-    icg->offset = (int) (cg->start - l->position_base);
+    if (c == '3') {
+        printf("start-base=%lu - %lu=%lu\n", cg->start, l->position_base,cg->start - l->position_base);
+        printf("occ=cfreq-cgsize=%lu - %lu=%lu\n", ch->info->frequency, cg->size, ch->info->frequency - cg->size);
+    }
+    icg->offset = (unsigned int) (cg->start - l->position_base);
     icg->occ_before = ch->info->frequency - cg->size;
     exarray_add(l->groups, icg);
     l->last_chargroup_size = cg->size; // the last so far

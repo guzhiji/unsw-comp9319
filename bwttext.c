@@ -113,6 +113,9 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile) {
 
     t->fp = fopen(bwtfile, "rb");
     t->ifp = fopen(indexfile, "w+b");
+/*
+    t->ifp = fopen(indexfile, "r");
+*/
     t->char_num = 0;
     t->chargroup_num = 0;
     t->chargroup_list_num = 0;
