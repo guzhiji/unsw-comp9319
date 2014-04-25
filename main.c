@@ -47,7 +47,7 @@ found
 */
     //}
     //dump_chartable(t);
-    dump_pos(t);
+    //dump_pos(t);
     //decode_backword(t);
 /*
 
@@ -65,35 +65,14 @@ found
     unsigned long pos = 0;
     fseek(tt, 4, SEEK_SET);
     while ((ttc=fgetc(tt))!=EOF) {
-        if (ttc == '3' && pos >= 488261) {
+        //if (ttc == '3' /* && pos >= 488261 */ ) {
             fprintf(ttt, "%lu %lu\n", pos, occ(t, (unsigned char) ttc, pos));
-        }
+        //}
         pos++;
     }
     fclose(ttt);
     fclose(tt);
-    /*
-output:
-488261 780
-489218 473914
-696464 681160
-696465 681161
-709017 693713
-710003 694699
-710004 694700
-711092 695788
 
-but it should be:
-488261 780
-489218 781
-696464 782
-696465 783
-709017 784
-710003 785
-710004 786
-711092 787
-     */
-    
     bwttext_free(t);
     return 0;
 }

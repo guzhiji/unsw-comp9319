@@ -82,15 +82,15 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
     if (c == NULL) return NULL;
     r->first = c->smaller_symbols;
     r->last = r->first + c->info->frequency - 1;
-    printf("%lu, %lu\n", r->first, r->last);
+    //printf("%lu, %lu\n", r->first, r->last);
     while (r->first <= r->last && pp > 0) {
         x = p[--pp];
         c = t->char_hash[(unsigned int) x];
         if (c == NULL) return NULL;
-        printf("[%lu, %lu, %lu]\n", c->smaller_symbols, occ(t, x, r->first), occ(t, x, r->last + 1) - 1);
+        //printf("[%lu, %lu, %lu]\n", c->smaller_symbols, occ(t, x, r->first), occ(t, x, r->last + 1) - 1);
         r->first = c->smaller_symbols + occ(t, x, r->first);
         r->last = c->smaller_symbols + occ(t, x, r->last + 1) - 1;
-        printf("%lu, %lu\n\n", r->first, r->last);
+        //printf("%lu, %lu\n\n", r->first, r->last);
     }
 
     if (r->first <= r->last) return r;
@@ -106,10 +106,12 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     //printf("occ> -------------------\n");
     while ((cur = exarray_next(list->groups, cur)) != NULL) {
         cg = (bwtindex_chargroup *) cur->data;
+        /*
         if (c == '3' && pos >= 488261) {
             printf("occ> pos: cur %lu, begin %lu\n", pos, cg->offset);
             printf("         occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
         }
+        */
         if (pos < cg->offset) {
             unsigned long r= pcg == NULL ? 0 : pcg->occ_before + pos - pcg->offset;
             return r;
@@ -137,11 +139,11 @@ void decode_backword(bwttext * t) {
         putchar(c);//if (i==5) break;
         ch = t->char_hash[(unsigned int) c];
         if (ch == NULL) {
-            printf("\nerror: %d\n", c);
+            fprintf(stderr, "\nerror: %d\n", c);
             break; // error
         }
         p = ch->smaller_symbols + occ(t, c, p);//i++;
     } while (p != t->end_position);
-    printf("\n");
+    //printf("\n");
     
 }
