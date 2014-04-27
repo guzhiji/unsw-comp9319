@@ -10,69 +10,85 @@
 int main(int argc, char **argv) {
     bwttext * t;
     fpos_range * r;
-    char * p = "Pride";
-/*
-h 167 169
-c 137 139
-a 108 109
-e 149 150
-p 211 212
-found
-y 252 254
-r 237 239
-r 233 235
-found
- */
-/*
+    char * p = "a";
+    /*
+    h 167 169
+    c 137 139
+    a 108 109
+    e 149 150
+    p 211 212
+    found
+    y 252 254
+    r 237 239
+    r 233 235
+    found
+     */
     t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
-*/
-/*
-    t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
-*/
-/*
-    t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
-*/
-/*
-    t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
-*/
-    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
+    /*
+        t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
+     */
+    /*
+        t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
+     */
+    /*
+        t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
+     */
+    /*
+        t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
+     */
 
     //{
     bwtindex_chartable_presave(t);
     bwttext_read(t);
     bwtindex_chartable_save(t);
     // OR
-/*
-    bwtindex_chartable_load(t);
-*/
+    /*
+        bwtindex_chartable_load(t);
+     */
     //}
     //dump_chartable(t);
     //dump_pos(t);
-    decode_backword(t);
-/*
+    /*
+        decode_backword(t);
+     */
 
     r = search_range(t, p, strlen(p));
     // TODO reverse
-    if (r != NULL)
-        printf("f-l=%lu-%lu", r->first, r->last);
-    free(r);
-*/
-/*
-    //occ for 3
-    FILE * tt=fopen("../tests/bwtsearch/gcc.bwt", "rb");
-    FILE * ttt=fopen("../gcc.c.out", "w");
-    int ttc;
-    unsigned long pos = 0;
-    fseek(tt, 4, SEEK_SET);
-    while ((ttc=fgetc(tt))!=EOF) {
-        //if (ttc == '3' / * && pos >= 488261 * / ) {
-            fprintf(ttt, "%lu %lu\n", pos, occ(t, (unsigned char) ttc, pos));
-        //}
-        pos++;
+    if (r != NULL) {
+        unsigned long i;
+        printf("%lu-%lu\n", r->first, r->last);
+        for (i = r->first; i <= r->last; i++) {
+            printf("\n%lu:\n", i);
+            decode_backward_until(t, i, '\n');
+            decode_forward_until(t, i, '\n');
+        }
+        free(r);
+    } else {
+        printf("not found\n");
     }
-    fclose(ttt);
-    fclose(tt);
-*/
+    //occ for 3
+    /*
+            FILE * tt=fopen("../tests/bwtsearch/gcc.bwt", "rb");
+            FILE * ttt=fopen("../gcc.c.out", "w");
+     */
+    /*
+        FILE * tt = fopen("../tests/bwtsearch/tiny.bwt", "rb");
+        FILE * ttt = fopen("../tiny.c.out", "w");
+        int ttc;
+        unsigned long pos = 0;
+        fseek(tt, 4, SEEK_SET);
+        while ((ttc = fgetc(tt)) != EOF) {
+    / *
+            if (ttc == 'e') {
+                fprintf(ttt, "%lu %lu\n", pos, occ(t, (unsigned char) ttc, pos));
+            }
+     * /
+            fprintf(ttt, "%lu %lu\n", pos, occ(t, 'e', pos));
+            pos++;
+        }
+        fclose(ttt);
+        fclose(tt);
+     */
     bwttext_free(t);
     return 0;
 }

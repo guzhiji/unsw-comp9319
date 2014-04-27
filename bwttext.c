@@ -6,15 +6,15 @@
 #include <stdlib.h>
 
 character * character_init(bwtindex_char * c) {
-    character * chobj = (character *) malloc(sizeof(character));
+    character * chobj = (character *) malloc(sizeof (character));
 
     chobj->info = c;
     chobj->smaller_symbols = 0;
-    chobj->grouplist = NULL;// loaded when needed
+    chobj->grouplist = NULL; // loaded when needed
     chobj->chargroup_list_positions = exarray_init(
             CHARGROUP_LIST_POS_SIZE_INIT,
             CHARGROUP_LIST_POS_SIZE_STEP,
-            sizeof(unsigned long));
+            sizeof (unsigned long));
 
     return chobj;
 }
@@ -47,7 +47,7 @@ void bwttext_read(bwttext * t) {
     pos = 0;
     while ((c = fgetc(t->fp)) != EOF) {
         cur_c = (unsigned char) c;
-        
+
         // char frequency
         chobj = t->char_hash[c];
         if (chobj == NULL) {
@@ -70,7 +70,7 @@ void bwttext_read(bwttext * t) {
                 chargroup_list_add(t, prev_c, prev_cg);
             }
             // re-initialize chargroup for the new char
-            prev_cg = (chargroup *) malloc(sizeof(chargroup));
+            prev_cg = (chargroup *) malloc(sizeof (chargroup));
             prev_cg->start = pos;
             prev_cg->size = 1;
             prev_c = cur_c;
@@ -82,6 +82,10 @@ void bwttext_read(bwttext * t) {
 
     }
 
+/*
+    t->filesize = pos;
+*/
+
     // the last one
     if (prev_cg != NULL)
         chargroup_list_add(t, prev_c, prev_cg);
@@ -90,7 +94,7 @@ void bwttext_read(bwttext * t) {
     chargroup_list_savereleaseall(t);
 
     // sort characters lexicographically
-    qsort(chars, t->char_num, sizeof(unsigned char), cmp_char);
+    qsort(chars, t->char_num, sizeof (unsigned char), cmp_char);
 
     // calculate smaller symbols using freq 
     // to generate data for the C[] table
@@ -109,7 +113,7 @@ void bwttext_read(bwttext * t) {
 
 bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex) {
     int i;
-    bwttext * t = (bwttext *) malloc(sizeof(bwttext));
+    bwttext * t = (bwttext *) malloc(sizeof (bwttext));
 
     t->fp = fopen(bwtfile, "rb");
     t->ifp = fopen(indexfile, buildindex ? "w+b" : "r");
@@ -117,7 +121,7 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex) {
     t->char_num = 0;
     t->chargroup_num = 0;
     t->chargroup_list_num = 0;
-    fread(&t->end_position, sizeof(unsigned long), 1, t->fp);
+    fread(&t->end_position, sizeof (unsigned long), 1, t->fp);
 
     for (i = 0; i < 256; i++) {
         t->char_hash[i] = NULL;

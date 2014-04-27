@@ -93,10 +93,6 @@ void exarray_addall(exarray * a, exarray * newarray) {
             a->tail = newarray->tail;
         }
     }
-    if (newarray->head == NULL) {
-        fprintf(stderr, "null head in new array\n");
-        //exit(1);
-    }
 }
 
 exarray_cursor * exarray_next(exarray * a, exarray_cursor * cur) {

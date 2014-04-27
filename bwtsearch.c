@@ -34,7 +34,7 @@ void dump_occ(bwttext * t) {
         cur = NULL;
         while ((cur = exarray_next(ch->grouplist->groups, cur)) != NULL) {
             bwtindex_chargroup * cg = (bwtindex_chargroup *) cur->data;
-            printf("(start: %lu, occ: %lu)\n", cg->offset, cg->occ_before);
+            printf("(start: %lu, occ: %lu)\n", cg->start, cg->occ_before);
         }
 
     }
@@ -58,12 +58,12 @@ void dump_pos(bwttext * t) {
             printf("%lu;", *p);
         }
         printf("\n");
-        
+
         bwtindex_chargrouplist_load(t, ch);
         cur = NULL;
         while ((cur = exarray_next(ch->grouplist->groups, cur)) != NULL) {
             bwtindex_chargroup * cg = (bwtindex_chargroup *) cur->data;
-            
+
         }
 
     }
@@ -79,8 +79,8 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 
     //dump_chartable(t);
     //dump_pos(t);
-    
-    r = (fpos_range *) malloc(sizeof(fpos_range));
+
+    r = (fpos_range *) malloc(sizeof (fpos_range));
 
     pp = l - 1;
     x = p[pp];
@@ -89,7 +89,7 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
     if (c == NULL) return NULL;
     r->first = c->smaller_symbols;
     r->last = r->first + c->info->frequency - 1;
-    //printf("%lu, %lu\n", r->first, r->last);
+    //printf("%c: %lu, %lu\n", c->info->c, r->first, r->last);
     while (r->first <= r->last && pp > 0) {
         x = p[--pp];
         c = t->char_hash[(unsigned int) x];
@@ -97,7 +97,7 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
         //printf("[%lu, %lu, %lu]\n", c->smaller_symbols, occ(t, x, r->first), occ(t, x, r->last + 1) - 1);
         r->first = c->smaller_symbols + occ(t, x, r->first);
         r->last = c->smaller_symbols + occ(t, x, r->last + 1) - 1;
-        //printf("%lu, %lu\n\n", r->first, r->last);
+        //printf("%c: %lu, %lu\n", c->info->c, r->first, r->last);
     }
 
     if (r->first <= r->last) return r;
@@ -106,52 +106,106 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 }
 
 //TODO use bsearch
+
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
-    chargroup_list * list = chargroup_list_get(t, c);if (list->groups->head==NULL) {
-        fprintf(stderr, "%c(%d): pos %lu, couldn't get any groups\n", c,c,pos);
-        //exit(1);
-    }
+    chargroup_list * list = chargroup_list_get(t, c);
     exarray_cursor * cur = NULL;
     bwtindex_chargroup * cg, * pcg = NULL;
-    //printf("occ> -------------------\n");
+
     while ((cur = exarray_next(list->groups, cur)) != NULL) {
         cg = (bwtindex_chargroup *) cur->data;
-        /*
-        if (c == '3' && pos >= 488261) {
-            printf("occ> pos: cur %lu, begin %lu\n", pos, cg->offset);
-            printf("         occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
-        }
-        */
-        if (pos < cg->offset) {
-            return pcg == NULL ? 0 : pcg->occ_before + pos - pcg->offset;
+        if (pos < cg->start) {
+            if (pcg == NULL) return 0;
+            if (pos < pcg->start + pcg->size)
+                return pcg->occ_before + pos - pcg->start;
+            return pcg->occ_before + pcg->size;
         }
         pcg = cg;
     }
-    if (pcg!=NULL) {
-        return pcg->occ_before + pos - pcg->offset;
-    }
-    return 0;
+    if (pcg == NULL) return 0;
+    if (pos < pcg->start + pcg->size)
+        return pcg->occ_before + pos - pcg->start;
+    return pcg->occ_before + pcg->size;
 
+}
+
+unsigned char fpos_char(bwttext * t, unsigned long fpos) {
+    int i;
+    unsigned char p = 0;
+    character * c;
+    for (i = 0; i < 256; i++) {
+        c = t->char_hash[i];
+        if (c == NULL) continue;
+        if (c->smaller_symbols > fpos) break;
+        p = c->info->c;
+    }
+    return p;
 }
 
 void decode_backword(bwttext * t) {
     unsigned char c;
     character * ch;
     unsigned long p = t->end_position;
-    //int i=0;
+
     do {
-        //printf("\ni: %d, pos: %lu, ", i, p);
+        //c = fpos_char(t, p);
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        //printf("char=%d, ", c);
-        putchar(c);//if (i==5) break;
+        putchar(c);
         ch = t->char_hash[(unsigned int) c];
         if (ch == NULL) {
             fprintf(stderr, "\nerror: %d\n", c);
             break; // error
         }
-        p = ch->smaller_symbols + occ(t, c, p);//i++;
+        p = ch->smaller_symbols + occ(t, c, p); //i++;
     } while (p != t->end_position);
     //printf("\n");
-    
+
+}
+
+// pos_prev is a fpos; it gets its previous char at it's lpos
+
+void decode_backward_until(bwttext * t, unsigned long pos_prev, unsigned char until) {
+    unsigned char c;
+    character * ch;
+    do {
+        fseek(t->fp, pos_prev + 4, SEEK_SET);
+        fread(&c, sizeof (unsigned char), 1, t->fp);
+        putchar(c);
+        ch = t->char_hash[(unsigned int) c];
+        if (ch == NULL) {
+            fprintf(stderr, "\nerror: %d\n", c);
+            break; // error
+        }
+        pos_prev = ch->smaller_symbols + occ(t, c, pos_prev);
+    } while (pos_prev != t->end_position && until != c);
+
+}
+
+unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
+    int tc;
+    unsigned long n = 0, p = 0;
+    fseek(t->fp, 4, SEEK_SET);
+    while ((tc = fgetc(t->fp)) != EOF) {
+        if (tc == c && n++ == occ)
+            return p;
+        p++;
+    }
+    return p;
+}
+
+void decode_forward_until(bwttext * t, unsigned long pos, unsigned char until) {
+    unsigned char c;
+    unsigned long occ, p = pos;
+    character * ch;
+
+    while (p <= t->end_position) {
+        c = fpos_char(t, p);
+        putchar(c);
+        if (c == until) break;
+        ch = t->char_hash[(unsigned int) c];
+        occ = pos - ch->smaller_symbols; // occ for the next char
+        p = lpos(t, c, occ);
+    }
+
 }

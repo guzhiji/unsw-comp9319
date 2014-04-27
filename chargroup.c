@@ -47,9 +47,7 @@ chargroup_list * chargroup_list_get(bwttext * t, unsigned char c) {
         }
 
     }
-if(exarray_size(ch->grouplist->groups)==0) {
-    printf("loaded a grouplist of size 0\n");
-}
+
     return ch->grouplist;
 }
 
@@ -69,7 +67,8 @@ void chargroup_list_add(bwttext * t, unsigned char c, chargroup * cg) {
     // add the chargroup
     // TODO check truncated?
     icg = (bwtindex_chargroup *) malloc(sizeof(bwtindex_chargroup));
-    icg->offset = cg->start;
+    icg->start = cg->start;
+    icg->size = cg->size;
     icg->occ_before = ch->info->frequency - cg->size;
     exarray_add(l->groups, icg);
     t->chargroup_num++;

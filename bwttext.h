@@ -35,7 +35,8 @@ typedef struct {
 } chargroup;
 
 typedef struct {
-    unsigned long offset;
+    unsigned long start;
+    unsigned long size;
     unsigned long occ_before;
 } bwtindex_chargroup;
 
@@ -47,6 +48,7 @@ typedef struct {
     unsigned long chargroup_num; // up to CHARGROUP_NUM_THRESHOLD
     unsigned int chargroup_list_num; // number of lists loaded
     unsigned long end_position;
+//    unsigned long filesize;
     FILE * fp;
     FILE * ifp;
 } bwttext;
