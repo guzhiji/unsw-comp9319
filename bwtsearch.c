@@ -1,8 +1,6 @@
 
 #include "bwtsearch.h"
 
-#include "exarray.h"
-#include "chargroup.h"
 #include "bwttext.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -105,33 +103,23 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 
 }
 
-//TODO use bsearch
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
-    chargroup_list * list = chargroup_list_get(t, c);if (list->groups->head==NULL) {
-        fprintf(stderr, "%c(%d): pos %lu, couldn't get any groups\n", c,c,pos);
-        //exit(1);
-    }
-    exarray_cursor * cur = NULL;
-    bwtindex_chargroup * cg, * pcg = NULL;
-    //printf("occ> -------------------\n");
-    while ((cur = exarray_next(list->groups, cur)) != NULL) {
-        cg = (bwtindex_chargroup *) cur->data;
-        /*
-        if (c == '3' && pos >= 488261) {
-            printf("occ> pos: cur %lu, begin %lu\n", pos, cg->offset);
-            printf("         occ: cur begin %lu, prev begin %lu\n", cg->occ_before, pcg==NULL ? 0 : pcg->occ_before);
-        }
-        */
-        if (pos < cg->offset) {
-            return pcg == NULL ? 0 : pcg->occ_before + pos - pcg->offset;
-        }
-        pcg = cg;
-    }
-    if (pcg!=NULL) {
-        return pcg->occ_before + pos - pcg->offset;
-    }
-    return 0;
+    bwtblock blk;
 
+    if (!bwtblock_find(t, pos, c, &blk)) // weird if so
+        return 0;
+
+    if (blk.pl > 0) {// a pure block
+        if (blk.c == c) // all c in the block
+            return blk.occ + pos - blk.pos;//get by position calculation
+        else // no c in the block
+            return blk.occ; // occ at the beginning
+    }
+
+    // TODO pos is ftell or position of char in bwttext
+    // TODO scan bwttext for c from blk.pos within |blk.pl|
+
+    return 0;
 }
 
 void decode_backword(bwttext * t) {
@@ -155,3 +143,4 @@ void decode_backword(bwttext * t) {
     //printf("\n");
     
 }
+

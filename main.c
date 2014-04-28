@@ -1,7 +1,6 @@
 
 #include "bwttext.h"
 #include "bwtsearch.h"
-#include "bwtindex.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,15 +36,6 @@ found
 */
     t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
 
-    //{
-    bwtindex_chartable_presave(t);
-    bwttext_read(t);
-    bwtindex_chartable_save(t);
-    // OR
-/*
-    bwtindex_chartable_load(t);
-*/
-    //}
     //dump_chartable(t);
     //dump_pos(t);
     decode_backword(t);

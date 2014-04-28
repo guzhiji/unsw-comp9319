@@ -1,146 +1,115 @@
 
 #include "bwttext.h"
 
-#include "exarray.h"
-#include "chargroup.h"
+#include "chartable.h"
+#include "bwtblock.h"
 #include <stdlib.h>
 
-character * character_init(bwtindex_char * c) {
-    character * chobj = (character *) malloc(sizeof(character));
-
-    chobj->info = c;
-    chobj->smaller_symbols = 0;
-    chobj->grouplist = NULL;// loaded when needed
-    chobj->chargroup_list_positions = exarray_init(
-            CHARGROUP_LIST_POS_SIZE_INIT,
-            CHARGROUP_LIST_POS_SIZE_STEP,
-            sizeof(unsigned long));
-
-    return chobj;
-}
-
-void character_free(character * c) {
-    exarray_free(c->chargroup_list_positions);
-    if (c->grouplist != NULL) {
-        exarray_free(c->grouplist->groups);
-        free(c->grouplist);
-    }
-    free(c);
-}
-
-int cmp_char(const void * c1, const void * c2) {
-    return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
+int _cmp_char(const void * c1, const void * c2) {
+    //return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
+    return (int) ((character *) c1)->c - ((character *) c2)->c
 }
 
 void bwttext_read(bwttext * t) {
 
     int c;
-    unsigned long pos, sbefore;
-    unsigned char prev_c;
+    unsigned long pos, sbefore, tsbefore;
     unsigned char cur_c;
-    unsigned char chars[256];
-    unsigned char * cur_cp = chars;
-    character * chobj;
-    bwtindex_char * cur_ch = t->char_table;
-    chargroup * prev_cg = NULL;
+    character * chobj, * cur_ch;
 
+    chartable_inithash(t);
+
+    // scan through all chars
+    // and calculate char frequencies
+    // and group them into blocks
     pos = 0;
+    t->char_num = 0;
+    cur_ch = t->char_table;
     while ((c = fgetc(t->fp)) != EOF) {
         cur_c = (unsigned char) c;
-        
-        // char frequency
+
         chobj = t->char_hash[c];
         if (chobj == NULL) {
-            cur_ch->c = *cur_cp = cur_c;
-            cur_ch->frequency = 1;
-            t->char_hash[c] = character_init(cur_ch);
+            cur_ch->c = cur_c;
+            cur_ch->ss = 1;
+            t->char_hash[c] = chobj = cur_ch;
             t->char_num++;
             cur_ch++;
-            cur_cp++;
         } else {
-            chobj->info->frequency++;
+            chobj->ss++;
         }
 
-        // continuous chars
-        if (prev_cg == NULL || prev_c != cur_c) {
-            // a new char comes
-            if (prev_cg != NULL) {
-                // store the prev one
-                //printf("%d: %lu, %d\n", prev_c, prev_cg->start, prev_cg->size);
-                chargroup_list_add(t, prev_c, prev_cg);
-            }
-            // re-initialize chargroup for the new char
-            prev_cg = (chargroup *) malloc(sizeof(chargroup));
-            prev_cg->start = pos;
-            prev_cg->size = 1;
-            prev_c = cur_c;
-        } else {
-            prev_cg->size++;
-        }
+        bwtblock_addchar(t, chobj, pos);
 
         pos++;
-
     }
-
-    // the last one
-    if (prev_cg != NULL)
-        chargroup_list_add(t, prev_c, prev_cg);
-
-    // finish chargroup lists
-    chargroup_list_savereleaseall(t);
+    // the last block (flush)
+    bwtblock_addchar(t, NULL, -1);
 
     // sort characters lexicographically
-    qsort(chars, t->char_num, sizeof(unsigned char), cmp_char);
+    qsort(t->char_table, t->char_num, sizeof(character), _cmp_char);
+
+    chartable_inithash(t);// set all null
 
     // calculate smaller symbols using freq 
     // to generate data for the C[] table
     c = 0; // count for boudndary
     sbefore = 0;
-    cur_cp = chars; // smallest char
+    cur_ch = t->char_table; // the smallest
     while (c++ < t->char_num) {
-        //printf("%d\n", *cur_cp);
-        chobj = t->char_hash[(unsigned int) *cur_cp];
-        chobj->smaller_symbols = sbefore; // update
-        sbefore += chobj->info->frequency; // accumulate freq
-        cur_cp++; // a larger char
+        // re-hash
+        t->char_hash[(unsigned int) cur_ch->c] = cur_ch;
+        // calculate smaller symbols
+        tsbefore = sbefore;
+        sbefore += chobj->ss; // accumulate freq
+        chobj->ss = tsbefore; // smaller symbols
+        cur_ch++; // a larger char
     }
 
 }
 
 bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex) {
-    int i;
+
     bwttext * t = (bwttext *) malloc(sizeof(bwttext));
 
     t->fp = fopen(bwtfile, "rb");
-    t->ifp = fopen(indexfile, buildindex ? "w+b" : "r");
+    t->ifp = fopen(indexfile, buildindex ? "w+b" : "rb");
 
     t->char_num = 0;
-    t->chargroup_num = 0;
-    t->chargroup_list_num = 0;
-    fread(&t->end_position, sizeof(unsigned long), 1, t->fp);
+    fread(&t->end, sizeof(unsigned long), 1, t->fp);
 
-    for (i = 0; i < 256; i++) {
-        t->char_hash[i] = NULL;
-        t->char_freqsorted[i] = NULL;
-    }
+    if (buildindex)
+        bwttext_index_write(t);
+    else
+        bwttext_index_load(t);
 
     return t;
 }
 
 void bwttext_free(bwttext * t) {
-    character * chobj;
-    unsigned int i;
 
     fclose(t->fp);
     fclose(t->ifp);
 
-    // release all characters
-    for (i = 0; i < 256; i++) {
-        chobj = t->char_hash[i];
-        if (chobj == NULL) continue;
-        character_free(chobj);
-    }
-
     free(t);
+}
+
+void bwttext_index_write(bwttext * t) {
+
+    // position of the char table
+    // position of the bwtblock indices
+    fseek(t->ifp, sizeof(unsigned long) * 2, SEEK_SET);
+    // occ table/bwt blocks
+    bwttext_read(t);// write blocks
+    // indices for the occ table
+    bwtblock_buildindex(t);// write indices for blokcs
+    // char table
+    chartable_save(t);
+
+}
+
+void bwttext_index_load(bwttext * t) {
+    bwtblock_loadindex(t);
+    chartable_load(t);
 }
 
