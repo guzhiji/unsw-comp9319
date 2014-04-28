@@ -116,7 +116,7 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex) {
     bwttext * t = (bwttext *) malloc(sizeof (bwttext));
 
     t->fp = fopen(bwtfile, "rb");
-    t->ifp = fopen(indexfile, buildindex ? "w+b" : "r");
+    t->ifp = fopen(indexfile, buildindex ? "w+b" : "rb");
 
     t->char_num = 0;
     t->chargroup_num = 0;

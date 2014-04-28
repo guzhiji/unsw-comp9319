@@ -198,14 +198,17 @@ void decode_forward_until(bwttext * t, unsigned long pos, unsigned char until) {
     unsigned char c;
     unsigned long occ, p = pos;
     character * ch;
-
-    while (p <= t->end_position) {
-        c = fpos_char(t, p);
+    //printf("decode forward: pos %lu\n", pos);
+    while (p != t->end_position) {
+        c = fpos_char(t, p); //printf("\n- %d: ", c);
         putchar(c);
-        if (c == until) break;
+        if (c == until) return;
         ch = t->char_hash[(unsigned int) c];
-        occ = pos - ch->smaller_symbols; // occ for the next char
+        occ = p - ch->smaller_symbols; // occ for the next char
         p = lpos(t, c, occ);
     }
+    fseek(t->fp, 4 + t->end_position, SEEK_SET);
+    c = fgetc(t->fp);
+    putchar(c);
 
 }

@@ -10,7 +10,7 @@
 int main(int argc, char **argv) {
     bwttext * t;
     fpos_range * r;
-    char * p = "a";
+    char * p = "peach";
     /*
     h 167 169
     c 137 139
@@ -33,9 +33,9 @@ int main(int argc, char **argv) {
     /*
         t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
      */
-    /*
+/*
         t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
-     */
+*/
 
     //{
     bwtindex_chartable_presave(t);
