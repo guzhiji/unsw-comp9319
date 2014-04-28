@@ -29,6 +29,7 @@ typedef struct {
 } bwtblock_index;
 
 typedef struct {
+    unsigned long file_size;
     unsigned int char_num;
     character char_table[256];
     character * char_hash[256];

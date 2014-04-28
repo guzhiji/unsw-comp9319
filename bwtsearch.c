@@ -13,59 +13,25 @@ void dump_chartable(bwttext * t) {
     for (i = 0; i < 256; i++) {
         ch = t->char_hash[i];
         if (ch == NULL) continue;
-        printf("%c (%d): ss=%lu, freq=%lu\n", ch->info->c, ch->info->c, ch->smaller_symbols, ch->info->frequency);
+        printf("%c (%d): ss=%lu\n", ch->c, ch->c, ch->ss);
     }
     printf("==================\n");
 }
 
-void dump_occ(bwttext * t) {
-    int i;
+unsigned long char_freq(bwttext * t, character * ch_o) {
     character * ch;
-    exarray_cursor * cur;
-    printf("==================\n");
-    printf("dump_occ:\n");
-    for (i = 0; i < 256; i++) {
+    unsigned int i;
+
+    if (ch_o == NULL) return 0;//non-existent char
+
+    //find next char alphabetically
+    for (i = (unsigned int) ch_o->c + 1 ; i < 256; i++) {
         ch = t->char_hash[i];
-        if (ch == NULL) continue;
-        printf("%c (%d):\n", ch->info->c, ch->info->c);
-        if (ch->grouplist == NULL) continue;
-        cur = NULL;
-        while ((cur = exarray_next(ch->grouplist->groups, cur)) != NULL) {
-            bwtindex_chargroup * cg = (bwtindex_chargroup *) cur->data;
-            printf("(start: %lu, occ: %lu)\n", cg->offset, cg->occ_before);
-        }
-
+        if (ch == NULL) continue;//skip non-existent chars
+        return ch->ss - ch_o->ss;
     }
-    printf("==================\n");
-}
 
-void dump_pos(bwttext * t) {
-    int i;
-    character * ch;
-    exarray_cursor * cur;
-    printf("==================\n");
-    printf("dump_pos:\n");
-    for (i = 0; i < 256; i++) {
-        ch = t->char_hash[i];
-        if (ch == NULL) continue;
-        printf("%c (%d):", ch->info->c, ch->info->c);
-        if (ch->chargroup_list_positions == NULL) continue;
-        cur = NULL;
-        while ((cur = exarray_next(ch->chargroup_list_positions, cur)) != NULL) {
-            unsigned long * p = (unsigned long *) cur->data;
-            printf("%lu;", *p);
-        }
-        printf("\n");
-        
-        bwtindex_chargrouplist_load(t, ch);
-        cur = NULL;
-        while ((cur = exarray_next(ch->grouplist->groups, cur)) != NULL) {
-            bwtindex_chargroup * cg = (bwtindex_chargroup *) cur->data;
-            
-        }
-
-    }
-    printf("==================\n");
+    return t->file_size - ch_o->ss;//ch_o is the largest
 }
 
 fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
@@ -85,17 +51,18 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 
     c = t->char_hash[(unsigned int) x];
     if (c == NULL) return NULL;
-    r->first = c->smaller_symbols;
-    r->last = r->first + c->info->frequency - 1;
-    //printf("%lu, %lu\n", r->first, r->last);
+
+    r->first = c->ss;
+    r->last = r->first + char_freq(t, c) - 1;
+    //printf("%c: %lu, %lu\n", x, r->first, r->last);
     while (r->first <= r->last && pp > 0) {
         x = p[--pp];
         c = t->char_hash[(unsigned int) x];
         if (c == NULL) return NULL;
-        //printf("[%lu, %lu, %lu]\n", c->smaller_symbols, occ(t, x, r->first), occ(t, x, r->last + 1) - 1);
-        r->first = c->smaller_symbols + occ(t, x, r->first);
-        r->last = c->smaller_symbols + occ(t, x, r->last + 1) - 1;
-        //printf("%lu, %lu\n\n", r->first, r->last);
+        //printf("[%lu, %lu, %lu]\n", c->ss, occ(t, x, r->first), occ(t, x, r->last + 1) - 1);
+        r->first = c->ss + occ(t, x, r->first);
+        r->last = c->ss + occ(t, x, r->last + 1) - 1;
+        //printf("%c: %lu, %lu\n\n", x, r->first, r->last);
     }
 
     if (r->first <= r->last) return r;
@@ -105,6 +72,9 @@ fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l) {
 
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     bwtblock blk;
+    unsigned long o, p;
+    unsigned short len;
+    int tc;
 
     if (!bwtblock_find(t, pos, c, &blk)) // weird if so
         return 0;
@@ -115,32 +85,48 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         else // no c in the block
             return blk.occ; // occ at the beginning
     }
+    // otherwise impure or length not determined yet
 
-    // TODO pos is ftell or position of char in bwttext
-    // TODO scan bwttext for c from blk.pos within |blk.pl|
+    // scan bwttext for c from blk.pos within |blk.pl|
+    o = blk.occ;
+    fseek(t->fp, 5 + blk.pos, SEEK_SET);//one char next to the start of the block, e.g. 5=4+1
+    len = 1;//the first char is read and skipped already
+    p = blk.pos + 1;
+    while ((tc = fgetc(t->fp)) != EOF) {
+        if (++p == pos) return o;
+        if (c == tc) o++;
+        if (blk.pl < 0) {
+            len++;
+            // blk.pl=-1 is an exception
+            // but impossible
+            // because an impure block has to be
+            // longer than 1
+            if (len == -blk.pl) {
+                //seems an error
+                fprintf(stderr, "error: \n");
+                break;
+            }
+        }
+    }
+    // for blk.pl=0
+    return o;
 
-    return 0;
 }
 
 void decode_backword(bwttext * t) {
     unsigned char c;
     character * ch;
-    unsigned long p = t->end_position;
-    //int i=0;
+    unsigned long p = t->end;
     do {
-        //printf("\ni: %d, pos: %lu, ", i, p);
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        //printf("char=%d, ", c);
-        putchar(c);//if (i==5) break;
+        putchar(c);
         ch = t->char_hash[(unsigned int) c];
         if (ch == NULL) {
             fprintf(stderr, "\nerror: %d\n", c);
             break; // error
         }
-        p = ch->smaller_symbols + occ(t, c, p);//i++;
-    } while (p != t->end_position);
-    //printf("\n");
-    
+        p = ch->ss + occ(t, c, p);
+    } while (p != t->end);
 }
 
