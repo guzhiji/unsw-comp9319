@@ -63,8 +63,8 @@ void bwttext_scan(bwttext * t) {
         t->char_hash[(unsigned int) cur_ch->c] = cur_ch;
         // calculate smaller symbols
         tsbefore = sbefore;
-        sbefore += chobj->ss; // accumulate freq
-        chobj->ss = tsbefore; // smaller symbols
+        sbefore += cur_ch->ss; // accumulate freq
+        cur_ch->ss = tsbefore; // smaller symbols
         cur_ch++; // a larger char
     }
 

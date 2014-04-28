@@ -19,7 +19,7 @@ typedef struct {
  * @param unsigned int      length of the pattern
  * @return range in the first column of the matrix
  */
-fpos_range * search_range(bwttext * t, unsigned char * p, unsigned int l);
+fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l);
 
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos);
 
