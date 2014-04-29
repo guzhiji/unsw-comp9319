@@ -5,19 +5,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void dump_chartable(bwttext * t) {
-    int i;
-    character * ch;
-    printf("==================\n");
-    printf("dump_chartable:\n");
-    for (i = 0; i < 256; i++) {
-        ch = t->char_hash[i];
-        if (ch == NULL) continue;
-        printf("%c (%d): ss=%lu\n", ch->c, ch->c, ch->ss);
-    }
-    printf("==================\n");
-}
-
 unsigned long char_freq(bwttext * t, character * ch_o) {
     character * ch;
     unsigned int i;
