@@ -143,17 +143,40 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
     return p;
 }
 
-void decode_backward(bwttext * t) {
+void decode_backward(bwttext * t, FILE * fout) {
     unsigned char c;
     character * ch;
     unsigned long p = t->end;
     do {
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        putchar(c);
+        //putchar(c);
+        fputc(c, fout);
         ch = t->char_hash[(unsigned int) c];
         if (ch == NULL) {
             fprintf(stderr, "\nerror: char code=%d\n", c);
+            break; // error
+        }
+        p = ch->ss + occ(t, c, p);
+    } while (p != t->end);
+}
+
+void decode_backward_rev(bwttext * t, FILE * fout) {
+    unsigned char c;
+    character * ch;
+    unsigned long p = t->end;
+    unsigned long dp = t->file_size - 1;
+
+    fseek(fout, dp, SEEK_SET);
+    do {
+        fseek(t->fp, p + 4, SEEK_SET);
+        fread(&c, sizeof (unsigned char), 1, t->fp);
+        fputc(c, fout);
+        fseek(fout, -2, SEEK_CUR);
+        dp--;
+        ch = t->char_hash[(unsigned int) c];
+        if (ch == NULL || dp < 0) {
+            fprintf(stderr, "\nerror: char code=%d\n, bwt pos=%lu, dest pos=%lu", c, p, dp);
             break; // error
         }
         p = ch->ss + occ(t, c, p);
