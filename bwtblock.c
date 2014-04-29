@@ -2,10 +2,11 @@
 #include "bwtblock.h"
 
 #include <stdlib.h>
+#include <limits.h>
 
-#define BWTBLOCK_PURITY_MASK (1 << (8 * sizeof(unsigned short) - 1))
-#define USHRT_MAX (BWTBLOCK_PURITY_MASK << 1 - 1)
-#define BWTBLOCK_MAX_LEN (USHRT_MAX >> 1)
+//#define BWTBLOCK_PURITY_MASK (1 << (8 * sizeof(unsigned short) - 1))
+//#define USHRT_MAX (BWTBLOCK_PURITY_MASK << 1 - 1)
+//#define BWTBLOCK_MAX_LEN (USHRT_MAX >> 1)
 
 unsigned long _bwtblock_count = 0;
 
@@ -18,7 +19,7 @@ void bwtblock_save(bwttext * t, bwtblock * b) {
     character * c;
 
     // save the block
-    fwrite(b, sizeof(bwtblock), 1, t->ifp);
+    fwrite(b, sizeof (bwtblock), 1, t->ifp);
     free(b);
     _bwtblock_count++;
 
@@ -28,7 +29,7 @@ void bwtblock_save(bwttext * t, bwtblock * b) {
     for (i = 255; i > -1; i--) {
         c = t->char_hash[i];
         occ = c == NULL ? 0 : c->ss; // freq before the next block
-        fwrite(&occ, sizeof(unsigned long), 1, t->ifp);
+        fwrite(&occ, sizeof (unsigned long), 1, t->ifp);
     }
 
 }
@@ -40,13 +41,17 @@ void bwtblock_addchar(bwttext * t, character * c, unsigned long p) {
 
     static bwtblock * block = NULL;
     static character * prev_char = NULL;
-    static unsigned short len = 0;
-    static int pure = 1;// assume TRUE
+    static short len = 0;
+    static int pure = 1; // assume TRUE
 
+/*
+    if (pure && prev_char != c && len > BWTBLOCK_PURE_MIN)
+        printf("end of a pure block!!!\n");
+*/
     // save the block
     if (block != NULL) {
         if (c == NULL ||
-                len == BWTBLOCK_MAX_LEN ||
+                len == SHRT_MAX || // BWTBLOCK_MAX_LEN ||
                 (pure && prev_char != c && len > BWTBLOCK_PURE_MIN) ||
                 (!pure && len == BWTBLOCK_IMPURE_MAX)) {
             // flush (c is null) or
@@ -57,7 +62,7 @@ void bwtblock_addchar(bwttext * t, character * c, unsigned long p) {
 
             //block->pl = (pure ? BWTBLOCK_PURITY_MASK : 0) & len;
             block->pl = pure ? len : -len;
-            bwtblock_save(t, block);// and free as well
+            bwtblock_save(t, block); // and free as well
             block = NULL;
         }
     }
@@ -65,10 +70,10 @@ void bwtblock_addchar(bwttext * t, character * c, unsigned long p) {
     // process the new char c
     if (c != NULL) {
         if (block == NULL) {
-            block = (bwtblock *) malloc(sizeof(bwtblock));
+            block = (bwtblock *) malloc(sizeof (bwtblock));
             // first char of the block
             block->pos = p; //ftell(t->fp) - 1;
-            block->occ = c->ss - 1;// freq - 1
+            block->occ = c->ss - 1; // freq - 1
             block->c = c->c;
             // init/re-init
             prev_char = NULL;
@@ -91,8 +96,8 @@ void bwtblock_buildindex(bwttext * t) {
     // start position
 
     start = ftell(t->ifp);
-    fseek(t->ifp, sizeof(unsigned long), SEEK_SET);
-    fwrite(&start, sizeof(unsigned long), 1, t->ifp);
+    fseek(t->ifp, sizeof (unsigned long), SEEK_SET);
+    fwrite(&start, sizeof (unsigned long), 1, t->ifp);
 
     // size and width
 
@@ -106,13 +111,13 @@ void bwtblock_buildindex(bwttext * t) {
 
     // scan for the first blocks within the current widths
 
-    len_blocks = (t->blk_index_width - 1) * sizeof(bwtblock);
+    len_blocks = (t->blk_index_width - 1) * sizeof (bwtblock);
     // the snapshot for the block being index hasn't been passed
-    len_snapshots = t->blk_index_width * sizeof(unsigned long) * 256;
+    len_snapshots = t->blk_index_width * sizeof (unsigned long) * 256;
 
     for (i = 0; i < t->blk_index_size; i++) {
         t->blk_index[i].add = ftell(t->ifp);
-        fread(&sample, sizeof(bwtblock), 1, t->ifp);
+        fread(&sample, sizeof (bwtblock), 1, t->ifp);
         t->blk_index[i].pos = sample.pos;
         fseek(t->ifp, len_blocks + len_snapshots, SEEK_CUR);
     }
@@ -120,9 +125,9 @@ void bwtblock_buildindex(bwttext * t) {
     // save
 
     fseek(t->ifp, start, SEEK_SET);
-    fwrite(&t->blk_index_width, sizeof(unsigned int), 1, t->ifp);
-    fwrite(&t->blk_index_size, sizeof(unsigned int), 1, t->ifp);
-    fwrite(t->blk_index, sizeof(bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
+    fwrite(&t->blk_index_width, sizeof (unsigned int), 1, t->ifp);
+    fwrite(&t->blk_index_size, sizeof (unsigned int), 1, t->ifp);
+    fwrite(t->blk_index, sizeof (bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
 
 }
 
@@ -133,18 +138,19 @@ void bwtblock_loadindex(bwttext * t) {
     fgetpos(t->ifp, &p_origin);
 
     // locate
-    fseek(t->ifp, sizeof(unsigned long), SEEK_SET);
-    fread(&start, sizeof(unsigned long), 1, t->ifp);
+    fseek(t->ifp, sizeof (unsigned long), SEEK_SET);
+    fread(&start, sizeof (unsigned long), 1, t->ifp);
     fseek(t->ifp, start, SEEK_SET);
     // load
-    fread(&t->blk_index_width, sizeof(unsigned int), 1, t->ifp);
-    fread(&t->blk_index_size, sizeof(unsigned int), 1, t->ifp);
-    fread(t->blk_index, sizeof(bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
+    fread(&t->blk_index_width, sizeof (unsigned int), 1, t->ifp);
+    fread(&t->blk_index_size, sizeof (unsigned int), 1, t->ifp);
+    fread(t->blk_index, sizeof (bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
 
     fsetpos(t->ifp, &p_origin);
 }
 
 // TODO it's an error if it returns NULL (it shouldn't)
+
 int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * blk) {
     unsigned int i;
     unsigned short len, lastindex;
@@ -163,13 +169,13 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
         cur++;
     }
     // the previous position is what we need
-    if (prev == NULL) return 0;// actually it's unlikely
+    if (prev == NULL) return 0; // actually it's unlikely
     // if it's a full scan of the index, prev is surely the last index
 
     // find the block
     fseek(t->ifp, prev->add, SEEK_SET);
     for (i = 0; i < t->blk_index_width; i++) { // scan blocks in the width of index
-        fread(blk, sizeof(bwtblock), 1, t->ifp);
+        fread(blk, sizeof (bwtblock), 1, t->ifp);
         if (blk->pos > pos) {
             // e.g. pos = -1
             // it fails to find a match at the very beginning
@@ -183,8 +189,8 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
                 // a different char from the first of the block
                 if (blk->pos > 0) {
                     // push back to find occ before the block, not after
-                    fseek(t->ifp, - sizeof(bwtblock) - (c + 1) * sizeof(unsigned long), SEEK_CUR);
-                    fread(&blk->occ, sizeof(unsigned long), 1, t->ifp);
+                    fseek(t->ifp, -sizeof (bwtblock) - (c + 1) * sizeof (unsigned long), SEEK_CUR);
+                    fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
                 } else // before the first block, occ is always one
                     blk->occ = 0;
                 blk->c = c;
@@ -195,14 +201,14 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
             // wait, there can be a missing modulo
             // e.g. _bwtblock_count / BWTBLOCK_INDEX_SIZE
             if (blk->c != c) {
-                fseek(t->ifp, - sizeof(bwtblock) - (c + 1) * sizeof(unsigned long), SEEK_CUR);
-                fread(&blk->occ, sizeof(unsigned long), 1, t->ifp);
+                fseek(t->ifp, -sizeof (bwtblock) - (c + 1) * sizeof (unsigned long), SEEK_CUR);
+                fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
                 blk->c = c;
             }
             blk->pl = 0; // UNKNOWN LENGTH, NEED TO SCAN UNTIL EOF
             return 1;
         }
-        fseek(t->ifp, 256 * sizeof(unsigned long), SEEK_CUR); // skip the snapshot of occ
+        fseek(t->ifp, 256 * sizeof (unsigned long), SEEK_CUR); // skip the snapshot of occ
     }
     // also unlikely
     return 0;
