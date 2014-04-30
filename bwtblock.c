@@ -9,8 +9,10 @@
 //#define BWTBLOCK_MAX_LEN (USHRT_MAX >> 1)
 
 unsigned long _bwtblock_count = 0;
+unsigned long _bwttext_pos = 0;
 
 /**
+ * TODO to be replaced
  * save a the block and also create a snapshot at the end of the block.
  */
 void bwtblock_save(bwttext * t, bwtblock * b) {
@@ -34,8 +36,62 @@ void bwtblock_save(bwttext * t, bwtblock * b) {
 
 }
 
+/**
+ * pl > 0, it's pure
+ * pl < 0, it's impure
+ */
+void bwtblock_add(bwttext * t, short pl) {
+
+    short l, tl;
+    int c, i;
+    unsigned long occ;
+    character * ch;
+    bwtblock blk;
+
+    // scan all chars in the block for char freq and occ
+    l = pl < 0 ? -pl: pl;
+    tl = 0;
+    while ((c = fgetc(t->fp)) != EOF && tl < l) {
+        ch = t->char_hash[c];
+        if (ch == NULL) {
+            // new char
+            ch = t->char_hash[c] = &t->char_table[t->char_num++];
+            ch->ss = 1; // freq=1
+            ch->c = c;
+        } else {
+            ch->ss++; // freq++
+        }
+        if (tl == 0) {
+            // take down the first char in the block
+            blk.pos = _bwttext_pos;
+            blk.c = c;
+            blk.occ = ch->ss - 1; // exclude occ for the current char
+        }
+        tl++;
+        _bwttext_pos++;
+    }
+
+    // store block info into the index file
+    blk.pl = pl;
+    fwrite(&blk, sizeof (bwtblock), 1, t->ifp);
+    _bwtblock_count++;
+
+    // create a snapshot
+    // occ for all possible chars (inverse order)
+    // fixed width of 256
+    for (i = 255; i > -1; i--) {
+        ch = t->char_hash[i];
+        // occ here is char freq before the next block
+        // so include occ for the current position
+        occ = ch == NULL ? 0 : ch->ss;
+        fwrite(&occ, sizeof (unsigned long), 1, t->ifp);
+    }
+
+}
+
 void bwtblock_scan(bwttext * t) {
 
+    fpos_t opos;
     int c, start;
     short len;
 
@@ -59,27 +115,43 @@ void bwtblock_scan(bwttext * t) {
                     // a char repeats
                     pb_len++;
                 }
-                if (len == BWTBLOCK_IMPURE_MAX) {
+                if (len == BWTBLOCK_IMPURE_MAX || len == SHRT_MAX) {
                     // meet the limit for an impure block
+
                     // add the impure block
-                    // TODO ...
+                    fgetpos(t->fp, &opos);
+                    fseek(t->fp, -1 - (int)len, SEEK_CUR);
+                    bwtblock_add(t, -len);//impure: length<0
+                    fsetpos(t->fp, &opos);
+
                     start = pb_start = c;
                     len = pb_len = 1;
                 } else {
                     len++;
+                }
+                if (pb_len >= BWTBLOCK_PURE_MIN) {
+                    // when a pure block gets sufficient length
+                    // len becomes the length of the impure block
+                    // because len might grow larger than SHRT_MAX
+                    // as pb_len approaches SHRT_MAX
+                    len -= pb_len;
                 }
             } else {
                 // a pure block found, but it hasn't finished
                 if (pb_start != c || pb_len == SHRT_MAX) {
                     // the different char terminates the pure block
 
+                    fgetpos(t->fp, &opos);
+                    fseek(t->fp, -1 - (int)pb_len - (int)len, SEEK_CUR);
+
                     // add the impure block before pb_start
-                    if (len > pb_len) {
-                        // TODO ...
-                    }
+                    if (len > 0)
+                        bwtblock_add(t, -len);//impure: length<0
 
                     // add the pure block
-                    // TODO ...
+                    bwtblock_add(t, pb_len);//pure: length>0
+
+                    fsetpos(t->fp, &opos);
 
                     start = pb_start = c;
                     len = pb_len = 1;
@@ -89,13 +161,28 @@ void bwtblock_scan(bwttext * t) {
             }
 
         }
+
+        // the last block
+
+        if (len > 0)
+            fseek(t->fp, - (int)len, SEEK_CUR);
+        if (pb_len >= BWTBLOCK_PURE_MIN)
+            fseek(t->fp, - (int)pb_len, SEEK_CUR);
+
+        if (len > 0)
+            bwtblock_add(t, -len);//impure: length<0
+        if (pb_len >= BWTBLOCK_PURE_MIN)
+            bwtblock_add(t, pb_len);//pure: length>0
+
     }
+
+    t->file_size = _bwttext_pos;
 
 }
 
 
-
 /**
+ * TODO to be replaced
  * accept a char each time and automatically create a block.
  */
 void bwtblock_addchar(bwttext * t, character * c, unsigned long p) {

@@ -19,6 +19,7 @@ void bwttext_scan(bwttext * t) {
 
     chartable_inithash(t);
 
+/*
     // scan through all chars
     // and calculate char frequencies
     // and group them into blocks
@@ -45,8 +46,9 @@ void bwttext_scan(bwttext * t) {
     }
     // the last block (flush)
     bwtblock_addchar(t, NULL, -1);
-
     t->file_size = pos;
+*/
+    bwtblock_scan(t);
 
     // sort characters lexicographically
     qsort(t->char_table, t->char_num, sizeof(character), _cmp_char);

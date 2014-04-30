@@ -49,6 +49,7 @@ int main(int argc, char **argv) {
     //    decode_backward(t, stdout);
 
     printf("size=%d\n", sizeof(bwttext));
+    printf("filesize=%lu\n", t->file_size);
     FILE * out = fopen("../gcc.unbwt", "wb");
     decode_backward_rev(t, out);
     fclose(out);
