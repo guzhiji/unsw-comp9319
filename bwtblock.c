@@ -34,6 +34,67 @@ void bwtblock_save(bwttext * t, bwtblock * b) {
 
 }
 
+void bwtblock_scan(bwttext * t) {
+
+    int c, start;
+    short len;
+
+    // pb_: pure block
+    int pb_start;
+    short pb_len;
+
+    c = fgetc(t->fp);
+    if (c != EOF) {
+        start = pb_start = c;
+        len = pb_len = 1;
+
+        while ((c = fgetc(t->fp)) != EOF) {
+            if (pb_len < BWTBLOCK_PURE_MIN) {
+                // no pure block found
+                if (pb_start != c) {
+                    // reset pure block start
+                    pb_start = c;
+                    pb_len = 1;
+                } else {
+                    // a char repeats
+                    pb_len++;
+                }
+                if (len == BWTBLOCK_IMPURE_MAX) {
+                    // meet the limit for an impure block
+                    // add the impure block
+                    // TODO ...
+                    start = pb_start = c;
+                    len = pb_len = 1;
+                } else {
+                    len++;
+                }
+            } else {
+                // a pure block found, but it hasn't finished
+                if (pb_start != c || pb_len == SHRT_MAX) {
+                    // the different char terminates the pure block
+
+                    // add the impure block before pb_start
+                    if (len > pb_len) {
+                        // TODO ...
+                    }
+
+                    // add the pure block
+                    // TODO ...
+
+                    start = pb_start = c;
+                    len = pb_len = 1;
+                } else {
+                    pb_len++;
+                }
+            }
+
+        }
+    }
+
+}
+
+
+
 /**
  * accept a char each time and automatically create a block.
  */
