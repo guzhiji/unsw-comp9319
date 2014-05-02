@@ -37,22 +37,34 @@ int main(int argc, char **argv) {
     unsigned long i;
     char * p = "ea";
 
-    //t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
-    //t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
-    //t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
-    //t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
-    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
+/*
+        t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
+*/
+/*
+    t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
+*/
+/*
+        t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
+*/
+/*
+        t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
+*/
+/*
+        t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
+*/
     /*
        dump_chartable(t);
      */
 
-    //    decode_backward(t, stdout);
+        decode_backward(t, stdout);
 
-    printf("size=%d\n", sizeof(bwttext));
-    printf("filesize=%lu\n", t->file_size);
-    FILE * out = fopen("../gcc.unbwt", "wb");
-    decode_backward_rev(t, out);
-    fclose(out);
+    /*
+        printf("size=%d\n", sizeof(bwttext));
+        printf("filesize=%lu\n", t->file_size);
+        FILE * out = fopen("../gcc.unbwt", "wb");
+        decode_backward_rev(t, out);
+        fclose(out);
+     */
 
     /*
       r = search_fpos_range(t, p, strlen(p));
@@ -69,16 +81,16 @@ int main(int argc, char **argv) {
     }
     free(r);
      */
-    /*
-      dump_occ(t, 'e', "../tiny.c.out");
-     */
-    /*
-      char fn[50];
-      for (i = 0; i < 256; i++) {
-      sprintf(fn, "../occtest/japan.c.%lu.out", i);
-      dump_occ(t, (unsigned char) i, fn);
-      }
-     */
+/*
+    dump_occ(t, (unsigned char) 166, "../japan.c.out");
+*/
+/*
+        char fn[50];
+        for (i = 0; i < 256; i++) {
+            sprintf(fn, "../occtest/japan.c.%lu.out", i);
+            dump_occ(t, (unsigned char) i, fn);
+        }
+*/
 
     bwttext_free(t);
     return 0;

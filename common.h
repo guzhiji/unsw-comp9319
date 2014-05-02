@@ -7,9 +7,9 @@
 
 #include <stdio.h>
 
-#define BWTBLOCK_PURE_MIN 50
+#define BWTBLOCK_PURE_MIN 10
 #define BWTBLOCK_IMPURE_MAX 2048
-#define BWTBLOCK_INDEX_SIZE 1024
+#define BWTBLOCK_INDEX_SIZE 2024
 //1048576
 
 typedef struct {
