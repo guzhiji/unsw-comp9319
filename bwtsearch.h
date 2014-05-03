@@ -23,7 +23,10 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l);
 
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos);
 
-
 // TODO reverse data
+
+void decode_backward(bwttext * t, FILE * fout);
+
+void decode_backward_rev(bwttext * t, FILE * fout);
 
 #endif

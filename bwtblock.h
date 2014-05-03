@@ -4,11 +4,17 @@
 
 #include "common.h"
 
-void bwtblock_addchar(bwttext * t, character * c, unsigned long p);
+void bwtblock_add(bwttext * t, short pl, unsigned char cstart);
 
-void bwtblock_buildindex(bwttext * t);
+void bwtblock_scan(bwttext * t);
 
-void bwtblock_loadindex(bwttext * t);
+int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * blk);
+
+void bwtblock_index_build(bwttext * t);
+
+void bwtblock_index_load(bwttext * t);
+
+bwtblock_index * bwtblock_index_find(bwttext * t, unsigned long pos, unsigned short * islastindex);
 
 #endif
 

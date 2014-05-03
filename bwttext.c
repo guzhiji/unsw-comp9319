@@ -80,14 +80,14 @@ void bwttext_index_write(bwttext * t) {
     // occ table/bwt blocks
     bwttext_scan(t);// write blocks
     // indices for the occ table
-    bwtblock_buildindex(t);// write indices for blokcs
+    bwtblock_index_build(t);// write indices for blokcs
     // char table
     chartable_save(t);
 
 }
 
 void bwttext_index_load(bwttext * t) {
-    bwtblock_loadindex(t);
+    bwtblock_index_load(t);
     chartable_load(t);
 }
 
