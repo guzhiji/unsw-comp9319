@@ -72,12 +72,6 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     }
 
     if (blk.pl > 0) {// a pure block
-/*
-        printf("reading a pure block: %d, %lu - req %d, %lu\n", blk.c, blk.pos, c, pos);
-*/
-/*
-        if (blk.c != c) return blk.occ;
-*/
         if (blk.c == c) // all c in the block
             return blk.occ + pos - blk.pos; //get by position calculation
         else // no c in the block
@@ -91,17 +85,7 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     len = 0;
     p = blk.pos;
     while ((tc = fgetc(t->fp)) != EOF) {
-        //if (p++ == pos) return o;
-        // TODO
-        if (p++ == pos) {
-/*
-            if (blk.pl > 0) printf("pureblock: %lu, %lu, %lu\n", o, blk.occ, o-blk.occ);
-*/
-/*
-            if (blk.pl>0) printf("pure block: char %d,%d, %d>=%lu=%lu, %lu-1=%lu>=%lu\n", blk.c,tc, blk.pl, pos-blk.pos+1, o-blk.occ+1, p, pos,blk.pos);
-*/
-            return o;
-        }
+        if (p++ == pos) return o;
         if (c == (unsigned char) tc) o++;
         if (blk.pl < 0) {
             len++;

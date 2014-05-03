@@ -4,10 +4,6 @@
 #include <stdlib.h>
 #include <limits.h>
 
-//#define BWTBLOCK_PURITY_MASK (1 << (8 * sizeof(unsigned short) - 1))
-//#define USHRT_MAX (BWTBLOCK_PURITY_MASK << 1 - 1)
-//#define BWTBLOCK_MAX_LEN (USHRT_MAX >> 1)
-
 unsigned long _bwtblock_count = 0;
 unsigned long _bwttext_pos = 0;
 
@@ -179,7 +175,7 @@ void bwtblock_scan(bwttext * t) {
     }
 
     t->file_size = _bwttext_pos;
-
+    printf("block count=%lu\n", _bwtblock_count);
 }
 
 /**
@@ -342,7 +338,6 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
                     fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
                 } else // before the first block, occ is always one
                     blk->occ = 0;
-                blk->c = c;
             }
             return 1;
         } else if (lastindex && i == t->blk_index_width - 1) {
@@ -352,7 +347,6 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
             if (blk->c != c) {
                 fseek(t->ifp, -sizeof (bwtblock) - (c + 1) * sizeof (unsigned long), SEEK_CUR);
                 fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
-                blk->c = c;
             }
             blk->pl = 0; // UNKNOWN LENGTH, NEED TO SCAN UNTIL EOF
             return 1;
@@ -362,5 +356,4 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
     // also unlikely
     return 0;
 }
-
 
