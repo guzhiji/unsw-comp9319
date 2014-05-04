@@ -18,6 +18,22 @@ void dump_occ(bwttext * t, unsigned char c, char * outfile) {
     fclose(ttt);
 }
 
+void dump_occ_japan() {
+    bwttext * t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
+    int i;
+    char fn[50];
+    /*
+        dump_occ(t, (unsigned char) 166, "../japan.c.out");
+     */
+
+    for (i = 0; i < 256; i++) {
+        sprintf(fn, "../occtest/japan.c.%d.out", i);
+        dump_occ(t, (unsigned char) i, fn);
+    }
+
+    bwttext_free(t);
+}
+
 void dump_chartable(bwttext * t) {
     int i;
     character * ch;
@@ -32,66 +48,64 @@ void dump_chartable(bwttext * t) {
 }
 
 int main(int argc, char **argv) {
-    bwttext * t;
-    fpos_range * r;
-    unsigned long i;
-    char * p = "ea";
+
+    if (argc > 3) {
+        // 0: program name
+        // 1: bwt file
+        // 2: idx file
+        // 3: ?
+
+        char * opt_o = "-o";
+        bwttext * t = bwttext_init(argv[1], argv[2], 1);
+                printf("size=%d\n", sizeof(bwttext));
+                printf("filesize=%lu\n", t->file_size);
+
+        if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
+            // 3: "-o"
+            // 4: unbwt file
+
+            FILE * out = fopen(argv[4], "wb");
+            decode_backward_rev(t, out);
+            fclose(out);
+
+        } else {// searching
+            // 3: query term
+
+            fpos_range * r = search_fpos_range(t, argv[3], strlen(argv[3]));
+            if (r != NULL) {
+                unsigned long i;
+                printf("found between f-l=%lu-%lu\n", r->first, r->last);
+                for (i = r->first; i <= r->last; i++) {
+                    printf("\n%lu:\n", i);
+                    decode_backward_until(t, i, '\n');
+                    decode_forward_until(t, i, '\n');
+                }
+            } else {
+                fprintf(stderr, "no results found\n");
+            }
+            free(r);
+
+        }
+
+        bwttext_free(t);
+
+        return 0;
+
+    }
+
+    // error
+    return 1;
 
     /*
             t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
-     */
-    /*
             t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
-     */
-    /*
             t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
-     */
-    /*
             t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
-     */
-    t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
-    /*
-       dump_chartable(t);
-     */
+            t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
 
-    /*
+            dump_chartable(t);
+
             decode_backward(t, stdout);
      */
 
-    /*
-                printf("size=%d\n", sizeof(bwttext));
-                printf("filesize=%lu\n", t->file_size);
-     */
-    FILE * out = fopen("../gcc.unbwt", "wb");
-    decode_backward_rev(t, out);
-    fclose(out);
-
-    /*
-      r = search_fpos_range(t, p, strlen(p));
-    // TODO reverse
-    if (r != NULL) {
-    printf("found between f-l=%lu-%lu\n", r->first, r->last);
-    for (i = r->first; i <= r->last; i++) {
-    printf("\n%lu:\n", i);
-    decode_backward_until(t, i, '\n');
-    decode_forward_until(t, i, '\n');
-    }
-    } else {
-    printf("not found\n");
-    }
-    free(r);
-     */
-    /*
-        dump_occ(t, (unsigned char) 166, "../japan.c.out");
-     */
-    /*
-            char fn[50];
-            for (i = 0; i < 256; i++) {
-                sprintf(fn, "../occtest/japan.c.%lu.out", i);
-                dump_occ(t, (unsigned char) i, fn);
-            }
-     */
-
-    bwttext_free(t);
-    return 0;
 }

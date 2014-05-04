@@ -19,35 +19,6 @@ void bwttext_scan(bwttext * t) {
 
     chartable_inithash(t);
 
-/*
-    // scan through all chars
-    // and calculate char frequencies
-    // and group them into blocks
-    pos = 0;
-    t->char_num = 0;
-    cur_ch = t->char_table;
-    while ((c = fgetc(t->fp)) != EOF) {
-        cur_c = (unsigned char) c;
-
-        chobj = t->char_hash[c];
-        if (chobj == NULL) {
-            cur_ch->c = cur_c;
-            cur_ch->ss = 1;
-            t->char_hash[c] = chobj = cur_ch;
-            t->char_num++;
-            cur_ch++;
-        } else {
-            chobj->ss++;
-        }
-
-        bwtblock_addchar(t, chobj, pos);
-
-        pos++;
-    }
-    // the last block (flush)
-    bwtblock_addchar(t, NULL, -1);
-    t->file_size = pos;
-*/
     bwtblock_scan(t);
 
     // sort characters lexicographically
