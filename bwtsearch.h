@@ -8,6 +8,19 @@
 
 #include "common.h"
 
+#define STRBUF_LEN 64
+
+typedef struct _strbuf_node strbuf_node;
+struct _strbuf_node {
+    unsigned char l; // length
+    unsigned char c[STRBUF_LEN]; // char array
+    strbuf_node * p; // preceeding unit
+};
+
+typedef struct {
+    strbuf_node * tail;
+} strbuf;
+
 typedef struct {
     unsigned long first;
     unsigned long last;

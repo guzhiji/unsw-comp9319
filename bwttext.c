@@ -62,28 +62,44 @@ void bwttext_index_load(bwttext * t) {
     chartable_load(t);
 }
 
-bwttext * bwttext_init(char * bwtfile, char * indexfile, int buildindex) {
+bwttext * bwttext_init(char * bwtfile, char * indexfile, int forceindex) {
 
     bwttext * t = (bwttext *) malloc(sizeof(bwttext));
 
     t->fp = fopen(bwtfile, "rb");
-    t->ifp = fopen(indexfile, buildindex ? "w+b" : "rb");
-
-    t->char_num = 0;
+    if (t->fp == NULL) {
+        bwttext_free(t);
+        exit(1);
+    }
     fread(&t->end, sizeof(unsigned long), 1, t->fp);
 
-    if (buildindex)
+    t->char_num = 0;
+
+    t->ifp = NULL;
+    if (!forceindex) { // try to read
+        t->ifp = fopen(indexfile, "rb");
+        if (t->ifp != NULL)
+            bwttext_index_load(t);
+    }
+    if (t->ifp == NULL) { // force to index or fail to read
+        t->ifp = fopen(indexfile, "w+b");
+        if (t->ifp == NULL) {
+            bwttext_free(t);
+            exit(1);
+        }
         bwttext_index_write(t);
-    else
-        bwttext_index_load(t);
+    }
 
     return t;
 }
 
 void bwttext_free(bwttext * t) {
-
-    fclose(t->fp);
-    fclose(t->ifp);
-
-    free(t);
+    if (t != NULL) {
+        if (t->fp != NULL)
+            fclose(t->fp);
+        if (t->ifp != NULL)
+            fclose(t->ifp);
+        free(t);
+    }
 }
+

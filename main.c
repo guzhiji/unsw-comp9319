@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
         // 3: ?
 
         char * opt_o = "-o";
-        bwttext * t = bwttext_init(argv[1], argv[2], 1);
+        bwttext * t = bwttext_init(argv[1], argv[2], 0);
                 printf("size=%d\n", sizeof(bwttext));
                 printf("filesize=%lu\n", t->file_size);
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
                 unsigned long i;
                 printf("found between f-l=%lu-%lu\n", r->first, r->last);
                 for (i = r->first; i <= r->last; i++) {
-                    printf("\n%lu:\n", i);
+                    //printf("\n%lu:\n", i);
                     decode_backward_until(t, i, '\n');
                     decode_forward_until(t, i, '\n');
                 }
