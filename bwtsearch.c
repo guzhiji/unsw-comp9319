@@ -2,6 +2,7 @@
 #include "bwtsearch.h"
 
 #include "bwttext.h"
+#include "bwtblock.h"
 #include <stdio.h>
 #include <stdlib.h>
 

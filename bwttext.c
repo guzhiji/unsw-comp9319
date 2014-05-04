@@ -13,9 +13,8 @@ int _cmp_char(const void * c1, const void * c2) {
 void bwttext_scan(bwttext * t) {
 
     int c;
-    unsigned long pos, sbefore, tsbefore;
-    unsigned char cur_c;
-    character * chobj, * cur_ch;
+    unsigned long sbefore, tsbefore;
+    character * cur_ch;
 
     chartable_inithash(t);
 
