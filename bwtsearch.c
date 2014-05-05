@@ -65,7 +65,9 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     bwtblock blk;
     unsigned long o, p;
     unsigned short len;
-    int tc;
+    //int tc;
+    int i, r;
+    unsigned char cblk[1024];
 
     if (!bwtblock_find(t, pos, c, &blk)) {// weird if so
         fprintf(stderr, "error: char code=%c; pos=%lu\n - block cannot be found", c, pos);
@@ -85,6 +87,15 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     fseek(t->fp, 4 + blk.pos, SEEK_SET);
     len = 0;
     p = blk.pos;
+    do {
+        r = fread(&cblk, sizeof(unsigned char), 1024, t->fp);
+        for (i = 0; i < r; i++) {
+            if (p++ == pos) return o;
+            if (c == cblk[i]) o++;
+        }
+    } while (r > 0);
+
+    /*
     while ((tc = fgetc(t->fp)) != EOF) {
         if (p++ == pos) return o;
         if (c == (unsigned char) tc) o++;
@@ -97,6 +108,8 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
             }
         }
     }
+    */
+
     // for blk.pl=0
     return o;
 
