@@ -217,23 +217,32 @@ void bwtblock_index_load(bwttext * t) {
 }
 
 bwtblock_index * bwtblock_index_find(bwttext * t, unsigned long pos, unsigned short * islastindex) {
-    unsigned int i;
-    bwtblock_index * prev, * cur;
+    unsigned int l, p, min, max;
 
-    prev = NULL;
-    cur = t->blk_index;
-    *islastindex = 1; // assume it's the last
-    for (i = 0; i < t->blk_index_size && i < BWTBLOCK_INDEX_SIZE; i++) {
-        if (cur->pos > pos) { // just passed the possible position
-            *islastindex = 0; // so it's not the last
-            break;
+    *islastindex = 0;
+    l = t->blk_index_size > BWTBLOCK_INDEX_SIZE ? BWTBLOCK_INDEX_SIZE : t->blk_index_size;
+    min = 0;
+    max = l - 1;
+    while (max - min > 1) {
+        p = (min + max) / 2;
+        if (t->blk_index[p].pos < pos) {
+            min = p;
+        } else if (t->blk_index[p].pos > pos) {
+            max = p;
+        } else {
+            return &t->blk_index[p];
         }
-        prev = cur;
-        cur++;
     }
-    // the previous position is what we need
-    // if it's a full scan of the index, prev is surely the last index
-    return prev;
+    if (t->blk_index[max].pos <= pos) {
+        // e.g. max is still l-1
+        *islastindex = 1;
+        return &t->blk_index[max];
+    }
+    if (t->blk_index[min].pos > pos)
+        // e.g. min is still 0
+        return NULL;
+    return &t->blk_index[min];
+
 }
 
 // TODO it's an error if it returns NULL (it shouldn't)
