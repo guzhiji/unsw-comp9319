@@ -26,6 +26,12 @@ typedef struct {
     unsigned long last;
 } fpos_range;
 
+typedef struct {
+    unsigned long * arr;
+    unsigned int max;
+    unsigned int len;
+} pset;
+
 /**
  * @param bwttext *         ref to processed bwttext
  * @param unsigned char *   ref to the queried pattern
@@ -33,6 +39,8 @@ typedef struct {
  * @return range in the first column of the matrix
  */
 fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l);
+
+void search(bwttext * t, unsigned char * p, unsigned int l);
 
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos);
 

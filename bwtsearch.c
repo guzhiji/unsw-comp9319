@@ -163,6 +163,45 @@ void strbuf_dump(strbuf * buf, FILE * fout) {
 
 }
 
+pset * pset_init() {
+    pset * s = (pset *) malloc(sizeof(pset));
+    s->arr = (unsigned long *) malloc(sizeof(unsigned long) * 32);
+    s->max = 32;
+    s->len = 0;
+}
+
+int pset_contains(pset * s, unsigned long pos) {
+    unsigned long i, l;
+    l = s->len;
+    for (i = 0; i < l; i++)
+        if (s->arr[i] == pos)
+            return 1;
+    return 0;
+}
+
+void pset_put(pset * s, unsigned long pos) {
+
+    //if (pset_contains(s, pos)) return;
+
+    if (s->len == s->max) {
+
+        unsigned long * ns = (unsigned long *) realloc(s->arr, sizeof(unsigned long) * (s->max + 32));
+
+        if (ns == NULL) return;
+
+        s->max += 32;
+        s->arr = ns;
+    }
+
+    s->arr[s->len++] = pos;
+
+}
+
+void pset_free(pset * s) {
+    free(s->arr);
+    free(s);
+}
+
 unsigned char fpos_char(bwttext * t, unsigned long fpos) {
     int i;
     unsigned char p = 0;
@@ -231,11 +270,10 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
 /**
  * pos_prev is a fpos; it gets its previous char at it's lpos.
  */
-void decode_backward_until(bwttext * t, unsigned long pos_prev, unsigned char until) {
+unsigned long decode_backward_until(bwttext * t, unsigned long pos_prev, unsigned char until, strbuf * sb) {
     character * ch;
     unsigned char c;
     unsigned long p = pos_prev;
-    strbuf * sb = strbuf_init();
     do {
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
@@ -249,19 +287,17 @@ void decode_backward_until(bwttext * t, unsigned long pos_prev, unsigned char un
             p = ch->ss + occ(t, c, p);
         }
     } while (p != t->end && until != c);
-    strbuf_dump(sb, stdout);
-    strbuf_free(sb);
-
+    return p;
 }
 
-void decode_forward_until(bwttext * t, unsigned long pos, unsigned char until) {
+unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char until) {
     character * ch;
     unsigned char c;
     unsigned long occ, p = pos;
     while (p != t->end) {
         c = fpos_char(t, p);
         putchar(c);
-        if (c == until) return;
+        if (c == until) return p;
         ch = t->char_hash[(unsigned int) c];
         occ = p - ch->ss; // occ for the next char
         p = lpos(t, c, occ);
@@ -269,4 +305,36 @@ void decode_forward_until(bwttext * t, unsigned long pos, unsigned char until) {
     fseek(t->fp, 4 + t->end, SEEK_SET);
     c = fgetc(t->fp);
     putchar(c);
+    return t->end;
 }
+
+void search(bwttext * t, unsigned char * p, unsigned int l) {
+
+    fpos_range * r = search_fpos_range(t, p, l);
+    if (r != NULL) {
+        unsigned long i, p;
+        pset * ps = pset_init();
+
+        printf("found between f-l=%lu-%lu\n", r->first, r->last);
+
+        for (i = r->first; i <= r->last; i++) {
+
+            strbuf * sb = strbuf_init();
+            p = decode_backward_until(t, i, '\n', sb);
+            if (!pset_contains(ps, p)) {
+                pset_put(ps, p);
+                strbuf_dump(sb, stdout);
+                decode_forward_until(t, i, '\n');
+            }
+            strbuf_free(sb);
+
+        }
+
+        pset_free(ps);
+    } else {
+        fprintf(stderr, "no results found\n");
+    }
+    free(r);
+
+}
+

@@ -71,19 +71,7 @@ int main(int argc, char **argv) {
         } else {// searching
             // 3: query term
 
-            fpos_range * r = search_fpos_range(t, argv[3], strlen(argv[3]));
-            if (r != NULL) {
-                unsigned long i;
-                printf("found between f-l=%lu-%lu\n", r->first, r->last);
-                for (i = r->first; i <= r->last; i++) {
-                    //printf("\n%lu:\n", i);
-                    decode_backward_until(t, i, '\n');
-                    decode_forward_until(t, i, '\n');
-                }
-            } else {
-                fprintf(stderr, "no results found\n");
-            }
-            free(r);
+            search(t, argv[3], strlen(argv[3]));
 
         }
 
