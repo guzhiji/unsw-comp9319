@@ -63,11 +63,6 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
 
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     bwtblock blk;
-    unsigned long o, p;
-    unsigned short len;
-    //int tc;
-    int i, r;
-    unsigned char cblk[1024];
 
     if (!bwtblock_find(t, pos, c, &blk)) {// weird if so
         fprintf(stderr, "error: char code=%c; pos=%lu\n - block cannot be found", c, pos);
@@ -82,36 +77,45 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     }
     // otherwise impure or length not determined yet
 
-    // scan bwttext for c from blk.pos within |blk.pl|
-    o = blk.occ;
-    fseek(t->fp, 4 + blk.pos, SEEK_SET);
-    len = 0;
-    p = blk.pos;
-    do {
-        r = fread(&cblk, sizeof(unsigned char), 1024, t->fp);
-        for (i = 0; i < r; i++) {
-            if (p++ == pos) return o;
-            if (c == cblk[i]) o++;
-        }
-    } while (r > 0);
+    {
+        //unsigned short len;
+        //int tc;
+        unsigned long o, p;
+        int i, r;
+        unsigned char cblk[1024];
 
-    /*
-    while ((tc = fgetc(t->fp)) != EOF) {
-        if (p++ == pos) return o;
-        if (c == (unsigned char) tc) o++;
-        if (blk.pl < 0) {
-            len++;
-            if (len == -blk.pl) {
-                //seems an error
-                fprintf(stderr, "error: char code=%c; pos=%lu; block=%lu\n", c, pos, blk.pos);
-                break;
+        // scan bwttext for c from blk.pos within |blk.pl|
+        o = blk.occ;
+        fseek(t->fp, 4 + blk.pos, SEEK_SET);
+        //len = 0;
+        p = blk.pos;
+        do {
+            r = fread(&cblk, sizeof(unsigned char), 1024, t->fp);
+            for (i = 0; i < r; i++) {
+                if (p++ == pos) return o;
+                if (c == cblk[i]) o++;
+            }
+        } while (r > 0);
+
+        /*
+        while ((tc = fgetc(t->fp)) != EOF) {
+            if (p++ == pos) return o;
+            if (c == (unsigned char) tc) o++;
+            if (blk.pl < 0) {
+                len++;
+                if (len == -blk.pl) {
+                    //seems an error
+                    fprintf(stderr, "error: char code=%c; pos=%lu; block=%lu\n", c, pos, blk.pos);
+                    break;
+                }
             }
         }
-    }
-    */
+        */
 
-    // for blk.pl=0
-    return o;
+        // for blk.pl=0
+        return o;
+
+    }
 
 }
 
