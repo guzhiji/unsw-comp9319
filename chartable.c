@@ -9,6 +9,41 @@ void chartable_inithash(bwttext * t) {
         t->char_hash[i] = NULL;
 }
 
+int _cmp_char(const void * c1, const void * c2) {
+    //return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
+    return (int) ((character *) c1)->c - ((character *) c2)->c;
+}
+
+/**
+ * calculate smaller symbols using freq 
+ * to generate data for the C[] table
+ */
+void chartable_ss_compute(bwttext * t) {
+
+    int c;
+    unsigned long sbefore, tsbefore;
+    character * cur_ch;
+
+    // sort characters lexicographically
+    qsort(t->char_table, t->char_num, sizeof(character), _cmp_char);
+
+    chartable_inithash(t);// set all null to re-hash
+
+    c = 0; // count for boudndary
+    sbefore = 0;
+    cur_ch = t->char_table; // the smallest
+    while (c++ < t->char_num) {
+        // re-hash
+        t->char_hash[(unsigned int) cur_ch->c] = cur_ch;
+        // calculate smaller symbols
+        tsbefore = sbefore;
+        sbefore += cur_ch->ss; // accumulate freq
+        cur_ch->ss = tsbefore; // smaller symbols
+        cur_ch++; // a larger char
+    }
+
+}
+
 void chartable_save(bwttext * t) {
     fpos_t p_end;
     unsigned long p_start;

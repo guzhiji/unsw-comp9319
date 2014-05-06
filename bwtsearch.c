@@ -29,9 +29,6 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
     unsigned int pp;
     unsigned char x;
 
-    //dump_chartable(t);
-    //dump_pos(t);
-
     r = (fpos_range *) malloc(sizeof (fpos_range));
 
     pp = l - 1;
@@ -216,7 +213,6 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
 }
 
 unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
-    //int tc;
     int i, r;
     unsigned long n = 0, p = 0;
     unsigned char cblk[1024];
@@ -231,14 +227,6 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
             p++;
         }
     } while (r > 0);
-
-    /*
-    while ((tc = fgetc(t->fp)) != EOF) {
-        if (tc == c && n++ == occ)
-            return p;
-        p++;
-    }
-    */
 
     return p;
 }

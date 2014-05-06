@@ -48,7 +48,7 @@ void dump_chartable(bwttext * t) {
 }
 
 int main(int argc, char **argv) {
-
+/*
     if (argc > 3) {
         // 0: program name
         // 1: bwt file
@@ -83,17 +83,20 @@ int main(int argc, char **argv) {
 
     // error
     return 1;
+*/
 
-    /*
+            bwttext * t;
             t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
+/*
             t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
             t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
             t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
             t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
-
+*/
             dump_chartable(t);
 
-            decode_backward(t, stdout);
-     */
+            //decode_backward(t, stdout);
+            bwttext_free(t);
+            return 0;
 
 }

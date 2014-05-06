@@ -18,10 +18,15 @@ typedef struct {
 } character;
 
 typedef struct {
-    unsigned long pos; //position of the start
+
+    unsigned long pos; //start position
+    short pl; //purity & length, >0 => pure, <0 => impure
+
     unsigned long occ; //occ before the start
     unsigned char c; //char at the start
-    short pl; //purity & length, >0 => pure, <0 => impure
+
+    unsigned long snapshot; //position of occ for all chars at end of the block
+
 } bwtblock;
 
 typedef struct {
@@ -30,7 +35,7 @@ typedef struct {
 } bwtblock_index;
 
 typedef struct {
-    unsigned long file_size;
+    unsigned long file_size; //excluding the beginning 4 bytes as the end position
     unsigned long end; //position of the last char
     unsigned int char_num;
     character char_table[256];
