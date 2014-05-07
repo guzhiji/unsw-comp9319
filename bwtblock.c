@@ -1,6 +1,7 @@
 
 #include "bwtblock.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 
@@ -46,10 +47,12 @@ void bwtblock_group_compress(bwtblock * blks, int size) {
 void bwtblock_prepare(bwttext * t) {
 
     int ic, ipc, bc;
-    unsigned long pos, len;
-    bwtblock blks[1024];
+    unsigned long pos, glen, allowed_size;
+    short bl, pure;// TODO count block length to restrict impure block creation
+    bwtblock blks[32];
 
-    _bwtblock_count_estimated = (unsigned long) (BWTBLOCK_MAXSIZE_RATIO * t->file_size / sizeof(bwtblock));
+    allowed_size = BWTBLOCK_MAXSIZE_RATIO * t->file_size;
+    _bwtblock_count_estimated = allowed_size / (sizeof(bwtblock) + 256 * sizeof (unsigned long));
     _bwtblock_count = 0;
 
     // start of BWT text content
@@ -59,31 +62,32 @@ void bwtblock_prepare(bwttext * t) {
 
     pos = 0;
     bc = -1; // will be advanced to 0 at the first char
-    len = 0;
+    glen = 0;
+    bl = 0;
+    pure = 1;
     ipc = EOF;
     while ((ic = fgetc(t->fp)) != EOF) {
-        if (ic == ipc && blks[bc].pl < SHRT_MAX) {
+        if ((bl < BWTBLOCK_IMPURE_MAX || ic == ipc) && bl < SHRT_MAX) {
             // the same as the preceding char
-            blks[bc].pl++;
+            bl++;
         } else {
             // new char, new block
-            if (bc == 1023) {
+            if (bc == 31) {
                 // blks[] is full
-                // 1 / block count = len / file size
-                // len should be at least file size / estimated blocks
+                // glen should be at least allowed size / estimated blocks
                 // and because of loss of precision, add one here
-                if (len < t->file_size / _bwtblock_count_estimated + 1) {
+                if (glen < t->file_size / _bwtblock_count_estimated + 1) {
                     // progress isn't good
                     // compress 2 slots together so there will be one more
-                    bwtblock_group_compress(blks, 1024);
+                    bwtblock_group_compress(blks, 32);
                     bc--;
                 } else {
                     // finish this group
-                    fwrite(&blks, sizeof(bwtblock), 1024, t->ifp);
-                    _bwtblock_count += 1024;
+                    fwrite(&blks, sizeof(bwtblock), 32, t->ifp);
+                    _bwtblock_count += 32;
                     // start the next group
                     bc = -1;
-                    len = 0;
+                    glen = 0;
                     //ipc = EOF;
                 }
             }
@@ -94,11 +98,12 @@ void bwtblock_prepare(bwttext * t) {
             blks[bc].c = (unsigned char) ic;
             blks[bc].pos = pos;
             blks[bc].pl = 1;
+            bl = 0;
         }
         pos++;
-        len++;
+        glen++;
     }
-    if (len > 0) {
+    if (glen > 0) {
         // a group hasn't been finished
         fwrite(&blks, sizeof(bwtblock), bc + 1, t->ifp);
         _bwtblock_count += bc + 1;
@@ -156,11 +161,14 @@ void bwtblock_occ_snapshot(bwttext * t) {
 
 void bwtblock_occ_compute(bwttext * t) {
 
-    fpos_t group_start, occ_pos;
+    fpos_t group_start;
+    unsigned long occ_pos, occ_ppos;
     bwtblock blks[1024];
     int r, i, isfirst = 1;
-
-    fgetpos(t->ifp, &occ_pos);
+    
+    // blocks were prepared before calling this function
+    // so here is the start of occ table
+    occ_pos = ftell(t->ifp);
 
     // start of the blocks section in index file
     fseek(t->ifp, sizeof (unsigned long) * 2, SEEK_SET);
@@ -170,20 +178,16 @@ void bwtblock_occ_compute(bwttext * t) {
         r = fread(&blks, sizeof(bwtblock), 1024, t->ifp);
         if (r > 0) {
             for (i = 0; i < r; i++) {
-                // only need to scan impure blocks
-                if (blks[i].pl < 0) {
-                    // create a snapshot before the block
-                    if (!isfirst) {
-                        // before the first block
-                        // occ is definitely 0
-                        fsetpos(t->ifp, &occ_pos);
-                        blks[i].snapshot = ftell(t->ifp);
-                        bwtblock_occ_snapshot(t);
-                        fgetpos(t->ifp, &occ_pos);
-                    }
-                    // scan the block
-                    bwtblock_scan(t, &blks[i]);
-                }
+                // TODO only need to take occ snapshot for impure blocks
+                // scan the block
+                bwtblock_scan(t, &blks[i]);
+                // take an occ snapshot for the block
+                fseek(t->ifp, occ_pos, SEEK_SET);
+                bwtblock_occ_snapshot(t);
+                if (!isfirst)
+                    blks[i].snapshot = occ_ppos; // the preceding snapshot, the one before the block
+                occ_ppos = occ_pos;
+                occ_pos = ftell(t->ifp);
                 isfirst = 0;
             }
             // over write the block group

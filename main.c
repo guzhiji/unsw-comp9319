@@ -86,13 +86,13 @@ int main(int argc, char **argv) {
 */
 
             bwttext * t;
-            t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
 /*
+            t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
             t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
             t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
             t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
-            t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
 */
+            t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
             dump_chartable(t);
 
             //decode_backward(t, stdout);
