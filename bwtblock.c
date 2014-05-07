@@ -170,7 +170,7 @@ void bwtblock_occ_compute(bwttext * t) {
         if (sample.pl > 0) {
             ch = t->char_hash[sample.c];
             if (ch == NULL) {
-                t->char_hash[sample.c] = &t->char_table[t->char_num++];
+                ch = t->char_hash[sample.c] = &t->char_table[t->char_num++];
                 ch->c = sample.c;
                 ch->ss = sample.pl;
             } else {
@@ -208,7 +208,7 @@ void bwtblock_occ_compute(bwttext * t) {
             }
             ch = t->char_hash[ic];
             if (ch == NULL) {
-                t->char_hash[ic] = &t->char_table[t->char_num++];
+                ch = t->char_hash[ic] = &t->char_table[t->char_num++];
                 ch->c = (unsigned char) ic;
                 ch->ss = 1;
             } else {

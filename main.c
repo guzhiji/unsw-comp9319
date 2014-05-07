@@ -57,8 +57,8 @@ int main(int argc, char **argv) {
 
         char * opt_o = "-o";
         bwttext * t = bwttext_init(argv[1], argv[2], 0);
-                printf("size=%d\n", sizeof(bwttext));
-                printf("filesize=%lu\n", t->file_size);
+        printf("size=%d\n", sizeof (bwttext));
+        printf("filesize=%lu\n", t->file_size);
 
         if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
             // 3: "-o"
@@ -84,16 +84,18 @@ int main(int argc, char **argv) {
     // error
     return 1;
 
-    /*
-            t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
-            t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
-            t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
-            t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
-            t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
-
-            dump_chartable(t);
-
-            decode_backward(t, stdout);
-     */
-
+    //--------------------------------------------------------------------------
+    //    bwttext * t;
+    //    t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
+    //    //            t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
+    //    //            t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
+    //    //            t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
+    //    //            t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
+    //
+    //    dump_chartable(t);
+    //
+    //    //            decode_backward(t, stdout);
+    //
+    //    bwttext_free(t);
+    //    return 0;
 }
