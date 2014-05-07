@@ -176,6 +176,7 @@ pset * pset_init() {
     s->arr = (unsigned long *) malloc(sizeof(unsigned long) * 32);
     s->max = 32;
     s->len = 0;
+    return s;
 }
 
 int pset_contains(pset * s, unsigned long pos) {
