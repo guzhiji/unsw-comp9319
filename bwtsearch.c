@@ -83,6 +83,9 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         unsigned long o, p;
         int i, r;
         unsigned char cblk[1024];
+        fpos_t opos;
+
+        fgetpos(t->fp, &opos);
 
         // scan bwttext for c from blk.pos within |blk.pl|
         o = blk.occ;
@@ -92,10 +95,15 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         do {
             r = fread(&cblk, sizeof(unsigned char), 1024, t->fp);
             for (i = 0; i < r; i++) {
-                if (p++ == pos) return o;
+                if (p++ == pos) {
+                    fsetpos(t->fp, &opos); // recover position
+                    return o;
+                }
                 if (c == cblk[i]) o++;
             }
         } while (r > 0);
+
+        fsetpos(t->fp, &opos);
 
         /*
         while ((tc = fgetc(t->fp)) != EOF) {
