@@ -19,6 +19,7 @@ typedef struct {
 
 typedef struct {
     unsigned long pos; //position of the start
+    unsigned long snapshot; //position of occ snapshot before the block
     unsigned long occ; //occ before the start
     unsigned char c; //char at the start
     short pl; //purity & length, >0 => pure, <0 => impure

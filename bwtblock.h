@@ -8,6 +8,8 @@ void bwtblock_add(bwttext * t, short pl, unsigned char cstart);
 
 void bwtblock_scan(bwttext * t);
 
+void bwtblock_occ_compute(bwttext * t);
+
 int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * blk);
 
 void bwtblock_index_build(bwttext * t);

@@ -2,11 +2,47 @@
 #include "chartable.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void chartable_inithash(bwttext * t) {
     int i;
     for (i = 0; i < 256; i++)
         t->char_hash[i] = NULL;
+}
+
+int _cmp_char(const void * c1, const void * c2) {
+    //return (int) * (unsigned char *) c1 - (int) * (unsigned char *) c2;
+    return (int) ((character *) c1)->c - ((character *) c2)->c;
+}
+
+/**
+ * calculate smaller symbols using freq 
+ * to generate data for the C[] table
+ */
+void chartable_ss_compute(bwttext * t) {
+
+    int c;
+    unsigned long sbefore, tsbefore;
+    character * ch;
+
+    // sort characters lexicographically
+    qsort(t->char_table, t->char_num, sizeof(character), _cmp_char);
+
+    chartable_inithash(t);// set all null
+
+    c = 0; // count for boudndary
+    sbefore = 0;
+    ch = t->char_table; // the smallest
+    while (c++ < t->char_num) {
+        // re-hash
+        t->char_hash[(unsigned int) ch->c] = ch;
+        // calculate smaller symbols
+        tsbefore = sbefore;
+        sbefore += ch->ss; // accumulate freq
+        ch->ss = tsbefore; // smaller symbols
+        ch++; // a larger char
+    }
+
 }
 
 void chartable_save(bwttext * t) {
