@@ -57,7 +57,6 @@ int main(int argc, char **argv) {
 
         char * opt_o = "-o";
         bwttext * t = bwttext_init(argv[1], argv[2], 0);
-        printf("size=%d\n", sizeof (bwttext));
         printf("filesize=%lu\n", t->file_size);
 
         if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding

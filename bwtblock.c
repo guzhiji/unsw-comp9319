@@ -299,9 +299,10 @@ bwtblock_index * bwtblock_index_find(bwttext * t, unsigned long pos, unsigned sh
 // TODO it's an error if it returns NULL (it shouldn't)
 
 int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * blk) {
-    unsigned int i;
+    unsigned int i, bc, r, nr;
     unsigned short len, islastindex;
     bwtblock_index * idx;
+    bwtblock blks[64];
 
     // search index
     idx = bwtblock_index_find(t, pos, &islastindex);
@@ -309,39 +310,52 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
 
     // find the block
     fseek(t->ifp, idx->add, SEEK_SET);
-    for (i = 0; i < t->blk_index_width; i++) { // scan blocks in the width of index
-        fread(blk, sizeof (bwtblock), 1, t->ifp);
-        if (blk->pos > pos) {
-            // e.g. pos = -1
-            // it fails to find a match at the very beginning
-            // it doesn't matter as pos >= 0
-            return 0;
-        }
-        len = blk->pl < 0 ? -blk->pl : blk->pl;
-        if (blk->pos <= pos && blk->pos + len > pos) {
-            // found
-            if (blk->c != c) {
-                // a different char from the first of the block
-                if (blk->pos > 0) {
-                    fseek(t->ifp, blk->snapshot + c * sizeof (unsigned long), SEEK_SET);
-                    fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
-                } else // before the first block, occ is always one
-                    blk->occ = 0;
+    bc = 0;
+    while (bc < t->blk_index_width) {
+        nr = t->blk_index_width - bc;
+        if (nr > 64) nr = 64;
+        r = fread(blks, sizeof (bwtblock), nr, t->ifp);
+        bc += r;
+        for (i = 0; i < r; i++) {
+
+            if (blks[i].pos > pos) {
+                // e.g. pos = -1
+                // it fails to find a match at the very beginning
+                // it doesn't matter as pos >= 0
+                blk = NULL;
+                return 0;
             }
-            return 1;
-        } else if (islastindex && i == t->blk_index_width - 1) {
-            // at the last block of the last width of index, but not found
-            // wait, there can be a missing modulo
-            // e.g. _bwtblock_count / BWTBLOCK_INDEX_SIZE
-            if (blk->c != c) {
-                fseek(t->ifp, blk->snapshot + c * sizeof (unsigned long), SEEK_SET);
-                fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
+            len = blks[i].pl < 0 ? -blks[i].pl : blks[i].pl;
+            if (blks[i].pos <= pos && blks[i].pos + len > pos) {
+                // found
+                if (blks[i].c != c) {
+                    // a different char from the first of the block
+                    if (blks[i].pos > 0) {
+                        fseek(t->ifp, blks[i].snapshot + c * sizeof (unsigned long), SEEK_SET);
+                        fread(&blks[i].occ, sizeof (unsigned long), 1, t->ifp);
+                    } else // before the first block, occ is always one
+                        blks[i].occ = 0;
+                }
+                *blk = blks[i];
+                return 1;
+            } else if (islastindex && i == t->blk_index_width - 1) {
+                // at the last block of the last width of index, but not found
+                // wait, there can be a missing modulo
+                // e.g. _bwtblock_count / BWTBLOCK_INDEX_SIZE
+                if (blks[i].c != c) {
+                    fseek(t->ifp, blks[i].snapshot + c * sizeof (unsigned long), SEEK_SET);
+                    fread(&blks[i].occ, sizeof (unsigned long), 1, t->ifp);
+                }
+                blks[i].pl = 0; // UNKNOWN LENGTH, NEED TO SCAN UNTIL EOF
+                *blk = blks[i];
+                return 1;
             }
-            blk->pl = 0; // UNKNOWN LENGTH, NEED TO SCAN UNTIL EOF
-            return 1;
+
         }
     }
+
     // also unlikely
+    blk = NULL;
     return 0;
 }
 
