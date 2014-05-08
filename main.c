@@ -49,6 +49,10 @@ void dump_chartable(bwttext * t) {
 
 int main(int argc, char **argv) {
 
+    printf("sizeof character=%d\n", sizeof(character));
+    printf("sizeof bwtblock=%d\n", sizeof(bwtblock));
+    printf("sizeof bwtblock_index=%d\n", sizeof(bwtblock_index));
+
     if (argc > 3) {
         // 0: program name
         // 1: bwt file
@@ -57,7 +61,6 @@ int main(int argc, char **argv) {
 
         char * opt_o = "-o";
         bwttext * t = bwttext_init(argv[1], argv[2], 0);
-        printf("size=%d\n", sizeof (bwttext));
         printf("filesize=%lu\n", t->file_size);
 
         if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
