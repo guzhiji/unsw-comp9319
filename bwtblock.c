@@ -245,7 +245,8 @@ void bwtblock_index_build(bwttext * t) {
     fseek(t->ifp, start, SEEK_SET);
     fwrite(&t->blk_index_width, sizeof (unsigned int), 1, t->ifp);
     fwrite(&t->blk_index_size, sizeof (unsigned int), 1, t->ifp);
-    fwrite(t->blk_index, sizeof (bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
+    //fwrite(t->blk_index, sizeof (bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
+    fwrite(t->blk_index, sizeof (bwtblock_index), t->blk_index_size, t->ifp);
 
 }
 
@@ -262,7 +263,8 @@ void bwtblock_index_load(bwttext * t) {
     // load
     fread(&t->blk_index_width, sizeof (unsigned int), 1, t->ifp);
     fread(&t->blk_index_size, sizeof (unsigned int), 1, t->ifp);
-    fread(t->blk_index, sizeof (bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
+    //fread(t->blk_index, sizeof (bwtblock_index), BWTBLOCK_INDEX_SIZE, t->ifp);
+    fread(t->blk_index, sizeof (bwtblock_index), t->blk_index_size, t->ifp);
 
     fsetpos(t->ifp, &p_origin);
 }

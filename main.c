@@ -49,6 +49,10 @@ void dump_chartable(bwttext * t) {
 
 int main(int argc, char **argv) {
 
+    printf("sizeof character=%d\n", sizeof(character));
+    printf("sizeof bwtblock=%d\n", sizeof(bwtblock));
+    printf("sizeof bwtblock_index=%d\n", sizeof(bwtblock_index));
+
     if (argc > 3) {
         // 0: program name
         // 1: bwt file
