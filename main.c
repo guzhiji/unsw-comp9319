@@ -98,4 +98,7 @@ int main(int argc, char **argv) {
     //
     //    bwttext_free(t);
     //    return 0;
+    //--------------------------------------------------------------------------
+    //    dump_occ_japan();
+    //    return 0;
 }

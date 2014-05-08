@@ -160,25 +160,12 @@ void bwtblock_occ_compute(bwttext * t) {
     character * ch;
     fpos_t blk_pos;
     unsigned long bc, occ_pos, occ;
-    int ic, i;
+    int ic, i, l;
 
     bc = 0;
     occ_pos = ftell(t->ifp);
     fseek(t->ifp, sizeof (unsigned long) * 2, SEEK_SET);
     while (bc++ < _bwtblock_count && fread(&sample, sizeof(bwtblock), 1, t->ifp)) {
-        // count char frequencies for pure block
-        if (sample.pl > 0) {
-            ch = t->char_hash[sample.c];
-            if (ch == NULL) {
-                ch = t->char_hash[sample.c] = &t->char_table[t->char_num++];
-                ch->c = sample.c;
-                ch->ss = sample.pl;
-            } else {
-                ch->ss += sample.pl;
-            }
-            // no need to take an occ snapshot for pure blocks
-            continue;
-        }
 
         // take an occ snapshot before scanning the block
         if (sample.pos > 0) {
@@ -200,7 +187,8 @@ void bwtblock_occ_compute(bwttext * t) {
 
         // scan the block
         fseek(t->fp, sample.pos + 4, SEEK_SET);
-        for (i = 0; i < -sample.pl; i++) {
+        l = sample.pl > 0 ? sample.pl : -sample.pl;
+        for (i = 0; i < l; i++) {
             ic = fgetc(t->fp);
             if (ic == EOF) {
                 fprintf(stderr, "error: finish the file before expected\n");
