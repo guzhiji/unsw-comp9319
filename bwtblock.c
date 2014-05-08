@@ -14,8 +14,7 @@ unsigned long _bwttext_pos = 0;
 void bwtblock_add(bwttext * t, short pl, unsigned char cstart) {
 
     short l, tl;
-    int c, i;
-    unsigned long occ;
+    int c;
     character * ch;
     bwtblock blk;
 
@@ -165,7 +164,7 @@ void bwtblock_occ_compute(bwttext * t) {
     bc = 0;
     occ_pos = ftell(t->ifp);
     fseek(t->ifp, sizeof (unsigned long) * 2, SEEK_SET);
-    while (bc++ < _bwtblock_count && fread(&sample, sizeof(bwtblock), 1, t->ifp)) {
+    while (bc++ < _bwtblock_count && fread(&sample, sizeof (bwtblock), 1, t->ifp)) {
 
         // take an occ snapshot before scanning the block
         if (sample.pos > 0) {
@@ -176,13 +175,13 @@ void bwtblock_occ_compute(bwttext * t) {
             for (i = 0; i < 256; i++) {
                 ch = t->char_hash[i];
                 occ = ch == NULL ? 0 : ch->ss;
-                fwrite(&occ, sizeof(unsigned long), 1, t->ifp);
+                fwrite(&occ, sizeof (unsigned long), 1, t->ifp);
             }
             occ_pos = ftell(t->ifp); // the next position
             // overwrite the updated block
             fsetpos(t->ifp, &blk_pos);
-            fseek(t->ifp, -sizeof(bwtblock), SEEK_CUR);
-            fwrite(&sample, sizeof(bwtblock), 1, t->ifp);
+            fseek(t->ifp, -sizeof (bwtblock), SEEK_CUR);
+            fwrite(&sample, sizeof (bwtblock), 1, t->ifp);
         }
 
         // scan the block
@@ -324,7 +323,7 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
             if (blk->c != c) {
                 // a different char from the first of the block
                 if (blk->pos > 0) {
-                    fseek(t->ifp, blk->snapshot + c * sizeof(unsigned long), SEEK_SET);
+                    fseek(t->ifp, blk->snapshot + c * sizeof (unsigned long), SEEK_SET);
                     fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
                 } else // before the first block, occ is always one
                     blk->occ = 0;
@@ -335,7 +334,7 @@ int bwtblock_find(bwttext * t, unsigned long pos, unsigned char c, bwtblock * bl
             // wait, there can be a missing modulo
             // e.g. _bwtblock_count / BWTBLOCK_INDEX_SIZE
             if (blk->c != c) {
-                fseek(t->ifp, blk->snapshot + c * sizeof(unsigned long), SEEK_SET);
+                fseek(t->ifp, blk->snapshot + c * sizeof (unsigned long), SEEK_SET);
                 fread(&blk->occ, sizeof (unsigned long), 1, t->ifp);
             }
             blk->pl = 0; // UNKNOWN LENGTH, NEED TO SCAN UNTIL EOF

@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
         } else {// searching
             // 3: query term
 
-            search(t, argv[3], strlen(argv[3]));
+            search(t, (unsigned char *) argv[3], strlen(argv[3]));
 
         }
 
