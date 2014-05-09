@@ -35,12 +35,17 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     if (ch == NULL)
         return 0;
 
-    o_offset = occtable_offset(t, ch, pos);
-    if (ch->isfreq) {
-        o = t->occ_freq[o_offset];
+    if (pos < t->block_width) {
+        // before the first snapshot
+        o = 0;
     } else {
-        fseek(t->ifp, t->occ_infreq_pos + o_offset , SEEK_SET);
-        fread(&o, sizeof(unsigned long), 1, t->ifp);
+        o_offset = occtable_offset(t, ch, pos);
+        if (ch->isfreq) {
+            o = t->occ_freq[o_offset];
+        } else {
+            fseek(t->ifp, t->occ_infreq_pos + o_offset , SEEK_SET);
+            fread(&o, sizeof(unsigned long), 1, t->ifp);
+        }
     }
 
     c_pos = bwtblock_offset(t, pos);

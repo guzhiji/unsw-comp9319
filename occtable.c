@@ -36,12 +36,12 @@ void occtable_free(bwttext * t) {
 /**
  * @param t     BWT text object
  * @param ch    which character
- * @param pos   position in BWT text
+ * @param pos   position in BWT text, it MUST come AFTER the first snapshot
  * @return      occ offset in the occtable
  */
 unsigned long occtable_offset(bwttext * t, character * ch, unsigned long pos) {
     // char start pos + snapshot offset
-    return ch->i * t->block_num + (pos + 1) / t->block_width - 1;
+    return ch->i * t->block_num + pos / t->block_width - 1;
 }
 
 /**
@@ -50,8 +50,8 @@ unsigned long occtable_offset(bwttext * t, character * ch, unsigned long pos) {
  * @return      char offset of the block where the position locates
  */
 unsigned long bwtblock_offset(bwttext * t, unsigned long pos) {
-    // number of blocks * number of chars per block - 1
-    return (pos + 1) / t->block_width * t->block_width - 1;
+    // number of blocks * number of chars per block - 1 + 1
+    return pos / t->block_width * t->block_width;
 }
 
 void occtable_generate(bwttext * t) {
@@ -77,7 +77,9 @@ void occtable_generate(bwttext * t) {
             exit(1);
         }
 
-        // write occ before counting the current occurance
+        ch->ss++;
+
+        // write occ after counting the last char in the current block
         if (++n == t->block_width && blocks < t->block_num) {
             // a block of block_width is read
             // never count the last block
@@ -86,19 +88,22 @@ void occtable_generate(bwttext * t) {
             n = 0;
             blocks++;
 
-            // find the position where occ is stored
-            offset = occtable_offset(t, ch, pos);
-            if (ch->isfreq) {
-                t->occ_freq[offset] = ch->ss;
-                fseek(t->ifp, OCCTABLE_START + offset, SEEK_SET);
-            } else {
-                fseek(t->ifp, t->occ_infreq_pos + offset, SEEK_SET);
+            // create an occ snapshot for all chars
+            for (ic = 0; ic < t->char_num; ic++) {
+                ch = &t->char_table[ic];
+                // find the position where occ is stored
+                offset = occtable_offset(t, ch, pos);
+                if (ch->isfreq) {
+                    t->occ_freq[offset] = ch->ss;
+                    fseek(t->ifp, OCCTABLE_START + offset, SEEK_SET);
+                } else {
+                    fseek(t->ifp, t->occ_infreq_pos + offset, SEEK_SET);
+                }
+                fwrite(&ch->ss, sizeof(unsigned long), 1, t->ifp);
             }
-            fwrite(&ch->ss, sizeof(unsigned long), 1, t->ifp);
 
         }
 
-        ch->ss++;
         pos++;
     }
 
