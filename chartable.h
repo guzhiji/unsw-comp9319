@@ -6,7 +6,9 @@
 
 void chartable_inithash(bwttext * t);
 
-void chartable_ss_compute(bwttext * t);
+void chartable_compute_charfreq(bwttext * t);
+
+void chartable_compute_ss(bwttext * t);
 
 void chartable_save(bwttext * t);
 

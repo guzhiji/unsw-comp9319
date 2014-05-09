@@ -48,7 +48,7 @@ void dump_chartable(bwttext * t) {
 }
 
 int main(int argc, char **argv) {
-
+/*
     printf("sizeof character=%d\n", sizeof(character));
     printf("sizeof bwtblock=%d\n", sizeof(bwtblock));
     printf("sizeof bwtblock_index=%d\n", sizeof(bwtblock_index));
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
     // error
     return 1;
-
+*/
     //--------------------------------------------------------------------------
     //    bwttext * t;
     //    t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
@@ -102,6 +102,6 @@ int main(int argc, char **argv) {
     //    bwttext_free(t);
     //    return 0;
     //--------------------------------------------------------------------------
-    //    dump_occ_japan();
-    //    return 0;
+        dump_occ_japan();
+        return 0;
 }

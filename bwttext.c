@@ -2,40 +2,89 @@
 #include "bwttext.h"
 
 #include "chartable.h"
-#include "bwtblock.h"
+#include "occtable.h"
 #include <stdlib.h>
+#include <stdio.h>
 
+/**
+ * INDEX FILE STRUCTURE:
+ * index info:
+ * - file size
+ * - block num
+ * - block width
+ * - freq char num
+ * - char num
+ *
+ * occ table:
+ * - occ for freq chars
+ * - occ for less freq chars
+ * = unsigned long * char_num * block_num
+ *
+ * char table:
+ * - character(ss, sorted by char), character * char_num
+ */
 void bwttext_index_write(bwttext * t) {
+    unsigned char num;
 
-    // INDEX FILE STRUCTURE:
+    // INDEX INFO:
 
-    // position of the char table
-    // position of the bwtblock indices
+    // compute:
+    chartable_compute_charfreq(t);
 
-    // bwt blocks
-    t->char_num = 0;
-    chartable_inithash(t);
-    bwtblock_scan(t);
+    fseek(t->ifp, 0, SEEK_SET);
 
-    // occ table
-    t->char_num = 0;
-    chartable_inithash(t);
-    bwtblock_occ_compute(t);
+    // file size:
+    fwrite(&t->file_size, sizeof(unsigned long), 1, t->ifp);
 
-    // indices for blokcs
-    bwtblock_index_build(t);
+    // block num:
+    fwrite(&t->block_num, sizeof(unsigned long), 1, t->ifp);
 
-    // char table
-    chartable_ss_compute(t);
-    chartable_save(t);
+    // block width:
+    fwrite(&t->block_width, sizeof(unsigned long), 1, t->ifp);
+
+    // freq char num:
+    fwrite(&t->char_freq_num, sizeof(short), 1, t->ifp);
+
+    // char num:
+    // maximum 256, fit it in 1 byte
+    // since char_num can't be 0
+    num = (unsigned char) (t->char_num - 1);
+    fwrite(&num, sizeof(unsigned char), 1, t->ifp);
+
+    // OCC TABLE:
+
+    occtable_init(t, 0);
+    occtable_generate(t);//requires freq
+
+    // CHARTABLE:
+
+    chartable_compute_ss(t);//consumes freq
+    chartable_save(t);//requires ss
 
 }
 
 void bwttext_index_load(bwttext * t) {
+    unsigned char num;
 
-    bwtblock_index_load(t);
-    chartable_load(t);
+    fseek(t->ifp, 0, SEEK_SET);
+    // file size:
+    fread(&t->file_size, sizeof(unsigned long), 1, t->ifp);
 
+    // block num:
+    fread(&t->block_num, sizeof(unsigned long), 1, t->ifp);
+
+    // block width:
+    fread(&t->block_width, sizeof(unsigned long), 1, t->ifp);
+
+    // freq char num:
+    fread(&t->char_freq_num, sizeof(short), 1, t->ifp);
+
+    // char num:
+    fread(&num, sizeof(unsigned char), 1, t->ifp);
+    t->char_num = 1 + num;
+
+    occtable_init(t, 1);
+    chartable_load(t);//requires occ_infreq_pos, etc.
 }
 
 bwttext * bwttext_init(char * bwtfile, char * indexfile, int forceindex) {
@@ -69,10 +118,15 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile, int forceindex) {
 
 void bwttext_free(bwttext * t) {
     if (t != NULL) {
-        if (t->fp != NULL)
+        if (t->fp != NULL) {
             fclose(t->fp);
-        if (t->ifp != NULL)
+            t->fp = NULL;
+        }
+        if (t->ifp != NULL) {
             fclose(t->ifp);
+            t->ifp = NULL;
+        }
+        occtable_free(t);
         free(t);
     }
 }

@@ -2,7 +2,10 @@
 #include "bwtsearch.h"
 
 #include "bwttext.h"
-#include "bwtblock.h"
+#include "occtable.h"
+#include "strbuf.h"
+#include "pset.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -20,6 +23,36 @@ unsigned long char_freq(bwttext * t, character * ch_o) {
     }
 
     return t->file_size - ch_o->ss; //ch_o is the largest
+}
+
+unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
+
+    character * ch;
+    int ic;
+    unsigned long o, o_offset, c_pos;
+
+    ch = t->char_hash[c];
+    if (ch == NULL)
+        return 0;
+
+    o_offset = occtable_offset(t, ch, pos);
+    if (ch->isfreq) {
+        o = t->occ_freq[o_offset];
+    } else {
+        fseek(t->ifp, t->occ_infreq_pos + o_offset , SEEK_SET);
+        fread(&o, sizeof(unsigned long), 1, t->ifp);
+    }
+
+    c_pos = bwtblock_offset(t, pos);
+    if (c_pos == pos) return o;
+
+    fseek(t->fp, 4 + c_pos, SEEK_SET);
+    while ((ic = fgetc(t->fp)) != EOF) {
+        if (pos == c_pos++) return o;
+        if (ic == c) o++;
+    }
+    return o;
+
 }
 
 fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
@@ -59,156 +92,6 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
     if (r->first <= r->last) return r;
     return NULL;
 
-}
-
-unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
-    bwtblock blk;
-
-    if (!bwtblock_find(t, pos, c, &blk)) {// weird if so
-        fprintf(stderr, "error: char code=%c; pos=%lu\n - block cannot be found", c, pos);
-        return 0;
-    }
-
-    if (blk.pl > 0) {// a pure block
-        if (blk.c == c) // all c in the block
-            return blk.occ + pos - blk.pos; //get by position calculation
-        else // no c in the block
-            return blk.occ; // occ at the beginning
-    }
-    // otherwise impure or length not determined yet
-
-    {
-        //unsigned short len;
-        //int tc;
-        unsigned long o, p;
-        int i, r;
-        unsigned char cblk[1024];
-        fpos_t opos;
-
-        fgetpos(t->fp, &opos);
-
-        // scan bwttext for c from blk.pos within |blk.pl|
-        o = blk.occ;
-        fseek(t->fp, 4 + blk.pos, SEEK_SET);
-        //len = 0;
-        p = blk.pos;
-        do {
-            r = fread(&cblk, sizeof(unsigned char), 1024, t->fp);
-            for (i = 0; i < r; i++) {
-                if (p++ == pos) {
-                    fsetpos(t->fp, &opos); // recover position
-                    return o;
-                }
-                if (c == cblk[i]) o++;
-            }
-        } while (r > 0);
-
-        fsetpos(t->fp, &opos);
-
-        /*
-        while ((tc = fgetc(t->fp)) != EOF) {
-            if (p++ == pos) return o;
-            if (c == (unsigned char) tc) o++;
-            if (blk.pl < 0) {
-                len++;
-                if (len == -blk.pl) {
-                    //seems an error
-                    fprintf(stderr, "error: char code=%c; pos=%lu; block=%lu\n", c, pos, blk.pos);
-                    break;
-                }
-            }
-        }
-        */
-
-        // for blk.pl=0
-        return o;
-
-    }
-
-}
-
-strbuf * strbuf_init() {
-    strbuf * buf = (strbuf *) malloc(sizeof(strbuf));
-    buf->tail = NULL;
-    return buf;
-}
-
-void strbuf_free(strbuf * buf) {
-    strbuf_node * cur, * t;
-
-    cur = buf->tail;
-    while (cur != NULL) {
-        t = cur;
-        cur = cur->p;
-        free(t);
-    }
-    free(buf);
-}
-
-void strbuf_putchar(strbuf * buf, unsigned char c) {
-
-    if (buf->tail == NULL || buf->tail->l == STRBUF_LEN) {
-        strbuf_node * bn = (strbuf_node *) malloc(sizeof(strbuf_node));
-        bn->l = 1;
-        bn->c[0] = c;
-        bn->p = buf->tail;
-        buf->tail = bn;
-    } else {
-        buf->tail->c[buf->tail->l++] = c;
-    }
-
-}
-
-void strbuf_dump(strbuf * buf, FILE * fout) {
-    int i;
-    strbuf_node * bn = buf->tail;
-
-    while (bn != NULL) {
-        for (i = bn->l - 1; i > -1; i--)
-            fputc(bn->c[i], fout);
-        bn = bn->p;
-    }
-
-}
-
-pset * pset_init() {
-    pset * s = (pset *) malloc(sizeof(pset));
-    s->arr = (unsigned long *) malloc(sizeof(unsigned long) * 32);
-    s->max = 32;
-    s->len = 0;
-    return s;
-}
-
-int pset_contains(pset * s, unsigned long pos) {
-    unsigned long i, l;
-    l = s->len;
-    for (i = 0; i < l; i++)
-        if (s->arr[i] == pos)
-            return 1;
-    return 0;
-}
-
-void pset_put(pset * s, unsigned long pos) {
-
-    //if (pset_contains(s, pos)) return;
-
-    if (s->len == s->max) {
-
-        unsigned long * ns = (unsigned long *) realloc(s->arr, sizeof(unsigned long) * (s->max + 32));
-
-        if (ns == NULL) return;
-
-        s->max += 32;
-        s->arr = ns;
-    }
-
-    s->arr[s->len++] = pos;
-
-}
-
-void pset_free(pset * s) {
-    free(s->arr);
-    free(s);
 }
 
 unsigned char fpos_char(bwttext * t, unsigned long fpos) {
