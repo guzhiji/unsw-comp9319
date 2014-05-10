@@ -43,8 +43,8 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         if (ch->isfreq) {
             o = t->occ_freq[o_offset];
         } else {
-            fseek(t->ifp, t->occ_infreq_pos + o_offset * sizeof (unsigned long) , SEEK_SET);
-            fread(&o, sizeof(unsigned long), 1, t->ifp);
+            fseek(t->ifp, t->occ_infreq_pos + o_offset * sizeof (unsigned long), SEEK_SET);
+            fread(&o, sizeof (unsigned long), 1, t->ifp);
         }
     }
 
@@ -52,10 +52,21 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     if (c_pos == pos) return o;
 
     fseek(t->fp, 4 + c_pos, SEEK_SET);
-    while ((ic = fgetc(t->fp)) != EOF) {
-        if (pos == c_pos++) return o;
-        if (ic == c) o++;
+    {
+        unsigned char buf[1024];
+        int r;
+        do {
+            r = fread(buf, sizeof (unsigned char), 1024, t->fp);
+            for (ic = 0; ic < r; ic++) {
+                if (pos == c_pos++) return o;
+                if (buf[ic] == c) o++;
+            }
+        } while (r > 0);
     }
+    //    while ((ic = fgetc(t->fp)) != EOF) {
+    //        if (pos == c_pos++) return o;
+    //        if (ic == c) o++;
+    //    }
     return o;
 
 }
@@ -121,7 +132,7 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
     fseek(t->fp, 4, SEEK_SET);
 
     do {
-        r = fread(&cblk, sizeof(unsigned char), 1024, t->fp);
+        r = fread(&cblk, sizeof (unsigned char), 1024, t->fp);
         for (i = 0; i < r; i++) {
             if (cblk[i] == c && n++ == occ)
                 return p;
@@ -135,7 +146,7 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
             return p;
         p++;
     }
-    */
+     */
 
     return p;
 }
