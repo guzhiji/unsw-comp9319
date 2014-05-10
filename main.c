@@ -48,45 +48,45 @@ void dump_chartable(bwttext * t) {
 }
 
 int main(int argc, char **argv) {
-/*
-    printf("sizeof character=%d\n", sizeof(character));
-    printf("sizeof bwtblock=%d\n", sizeof(bwtblock));
-    printf("sizeof bwtblock_index=%d\n", sizeof(bwtblock_index));
+    /*
+        printf("sizeof character=%d\n", sizeof(character));
+        printf("sizeof bwtblock=%d\n", sizeof(bwtblock));
+        printf("sizeof bwtblock_index=%d\n", sizeof(bwtblock_index));
 
-    if (argc > 3) {
-        // 0: program name
-        // 1: bwt file
-        // 2: idx file
-        // 3: ?
+        if (argc > 3) {
+            // 0: program name
+            // 1: bwt file
+            // 2: idx file
+            // 3: ?
 
-        char * opt_o = "-o";
-        bwttext * t = bwttext_init(argv[1], argv[2], 0);
-        printf("filesize=%lu\n", t->file_size);
+            char * opt_o = "-o";
+            bwttext * t = bwttext_init(argv[1], argv[2], 0);
+            printf("filesize=%lu\n", t->file_size);
 
-        if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
-            // 3: "-o"
-            // 4: unbwt file
+            if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
+                // 3: "-o"
+                // 4: unbwt file
 
-            FILE * out = fopen(argv[4], "wb");
-            decode_backward_rev(t, out);
-            fclose(out);
+                FILE * out = fopen(argv[4], "wb");
+                decode_backward_rev(t, out);
+                fclose(out);
 
-        } else {// searching
-            // 3: query term
+            } else {// searching
+                // 3: query term
 
-            search(t, (unsigned char *) argv[3], strlen(argv[3]));
+                search(t, (unsigned char *) argv[3], strlen(argv[3]));
+
+            }
+
+            bwttext_free(t);
+
+            return 0;
 
         }
 
-        bwttext_free(t);
-
-        return 0;
-
-    }
-
-    // error
-    return 1;
-*/
+        // error
+        return 1;
+     */
     //--------------------------------------------------------------------------
     //    bwttext * t;
     //    t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
@@ -102,6 +102,6 @@ int main(int argc, char **argv) {
     //    bwttext_free(t);
     //    return 0;
     //--------------------------------------------------------------------------
-        dump_occ_japan();
-        return 0;
+    dump_occ_japan();
+    return 0;
 }

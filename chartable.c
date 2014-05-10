@@ -13,7 +13,7 @@ void chartable_inithash(bwttext * t) {
 void chartable_init(bwttext * t) {
 
     //t->char_table_pos = 
-    unsigned long p = t->occ_infreq_pos + (t->char_num - t->char_freq_num) * (t->block_num - 1);
+    unsigned long p = t->occ_infreq_pos + (t->char_num - t->char_freq_num) * (t->block_num - 1) * sizeof (unsigned long);
 
     //fseek(t->ifp, t->char_table_pos, SEEK_SET);
     fseek(t->ifp, p, SEEK_SET);
@@ -43,8 +43,8 @@ unsigned long compute_mem_maxchars(bwttext * t) {
     unsigned long allowed, misc, snapshot;
 
     misc = 15;
-    allowed = t->file_size / 2 + 2048 - t->char_num * sizeof(character) - misc;
-    snapshot = sizeof(long) * t->char_num;//size for each occ snapshot
+    allowed = t->file_size / 2 + 2048 - t->char_num * sizeof (character) - misc;
+    snapshot = sizeof (long) * t->char_num; //size for each occ snapshot
 
     //one snapshot for each block
     t->block_num = allowed / snapshot;
@@ -55,7 +55,7 @@ unsigned long compute_mem_maxchars(bwttext * t) {
         t->block_width = t->file_size / (t->block_num - 1);
 
     //memory available for each snapshot / size of one occ value
-    return OCCTABLE_MEMORY / t->block_num / sizeof(long);
+    return OCCTABLE_MEMORY / t->block_num / sizeof (unsigned long);
 
 }
 
@@ -91,14 +91,14 @@ void chartable_compute_charfreq(bwttext * t) {
     //max chars in memory as freq threshold
 
     max = compute_mem_maxchars(t);
-    t->char_freq_num = max > t->char_num ? t->char_num : max;
+    t->char_freq_num = max > t->char_num ? t->char_num : (unsigned short) max;
 
     //take the most freq ones
 
     for (i = 0; i < t->char_num; i++)
         chars[i] = &t->char_table[i];
 
-    qsort(chars, t->char_num, sizeof(character *), _cmp_char_by_freq);
+    qsort(chars, t->char_num, sizeof (character *), _cmp_char_by_freq);
 
     f1 = f2 = 0;
     for (i = 0; i < t->char_num; i++) {
@@ -122,8 +122,8 @@ void chartable_compute_ss(bwttext * t) {
     character * ch;
 
     // sort characters lexicographically
-    qsort(t->char_table, t->char_num, sizeof(character), _cmp_char_by_code);
-    chartable_inithash(t);// set all null
+    qsort(t->char_table, t->char_num, sizeof (character), _cmp_char_by_code);
+    chartable_inithash(t); // set all null
 
     c = 0; // count for boudndary
     sbefore = 0;
@@ -144,7 +144,7 @@ void chartable_save(bwttext * t) {
 
     chartable_init(t);
 
-    fwrite(t->char_table, sizeof(character), t->char_num, t->ifp);
+    fwrite(t->char_table, sizeof (character), t->char_num, t->ifp);
 
 }
 
@@ -154,7 +154,7 @@ void chartable_load(bwttext * t) {
 
     chartable_init(t);
 
-    fread(t->char_table, sizeof(character), t->char_num, t->ifp);
+    fread(t->char_table, sizeof (character), t->char_num, t->ifp);
 
     // hash chars
     chartable_inithash(t);

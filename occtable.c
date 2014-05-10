@@ -12,17 +12,17 @@ void occtable_init(bwttext * t, int load) {
 
         // excluding the snapshot after the last block
         n = t->char_freq_num * (t->block_num - 1);
-        t->occ_freq = (unsigned long *) malloc(sizeof(unsigned long) * n);
+        t->occ_freq = (unsigned long *) malloc(sizeof (unsigned long) * n);
 
         if (load)
-            fread(t->occ_freq, sizeof(unsigned long), n, t->ifp);
+            fread(t->occ_freq, sizeof (unsigned long), n, t->ifp);
 
     } else {
         n = 0;
         t->occ_freq = NULL;
     }
 
-    t->occ_infreq_pos = OCCTABLE_START + n;
+    t->occ_infreq_pos = OCCTABLE_START + n * sizeof (unsigned long);
 
 }
 
@@ -41,7 +41,7 @@ void occtable_free(bwttext * t) {
  */
 unsigned long occtable_offset(bwttext * t, character * ch, unsigned long pos) {
     // char start pos + snapshot offset
-    return ch->i * t->block_num + pos / t->block_width - 1;
+    return ch->i * (t->block_num - 1) + pos / t->block_width - 1;
 }
 
 /**
@@ -77,18 +77,9 @@ void occtable_generate(bwttext * t) {
             exit(1);
         }
 
-        ch->ss++;
-
-        // write occ after counting the last char in the current block
-        if (++n == t->block_width && blocks < t->block_num) {
-            // a block of block_width is read
-            // never count the last block
-
-            // the next char belongs to a newer block
-            n = 0;
-            blocks++;
-
-            // create an occ snapshot for all chars
+        if (++n == 1 && blocks > 1) {
+            // at the first char after the first block
+            // create an occ snapshot for all chars for the preceding block
             for (ic = 0; ic < t->char_num; ic++) {
                 ch = &t->char_table[ic];
                 // find the position where occ is stored
@@ -99,15 +90,19 @@ void occtable_generate(bwttext * t) {
                 } else {
                     fseek(t->ifp, t->occ_infreq_pos + offset, SEEK_SET);
                 }
-                fwrite(&ch->ss, sizeof(unsigned long), 1, t->ifp);
+                fwrite(&ch->ss, sizeof (unsigned long), 1, t->ifp);
             }
-
+        } else if (n == t->block_width) {
+            // a block of block_width is read
+            // the next char belongs to a newer block
+            n = 0;
+            blocks++;
         }
 
+        ch->ss++;
         pos++;
     }
 
     // char frequencies recovered
 
 }
-

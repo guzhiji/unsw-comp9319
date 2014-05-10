@@ -33,8 +33,8 @@ typedef struct {
     unsigned long * occ_freq;
     unsigned long occ_infreq_pos;
 
-    short char_freq_num;
-    short char_num;
+    unsigned short char_freq_num;
+    unsigned short char_num;
     character char_table[256];
     //unsigned long char_table_pos;
     character * char_hash[256];
