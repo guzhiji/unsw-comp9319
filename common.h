@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #define OCCTABLE_MEMORY 1024 * 1024 * 5
-#define OCCTABLE_START 15
 
 //-----------------------------
 //performance seems better, but index is too large
@@ -19,8 +18,8 @@
 typedef struct {
     unsigned char c;
     unsigned long ss; //smaller_symbols
-    unsigned char i;//char index in occ table
-    unsigned char isfreq;//freq table or infreq table
+    unsigned char i; //char index in occ table
+    unsigned char isfreq; //freq table or infreq table
 } character;
 
 typedef struct {
@@ -32,11 +31,11 @@ typedef struct {
 
     unsigned long * occ_freq;
     unsigned long occ_infreq_pos;
+    unsigned long occ_freq_pos;
 
     unsigned short char_freq_num;
     unsigned short char_num;
     character char_table[256];
-    //unsigned long char_table_pos;
     character * char_hash[256];
 
     FILE * fp; //file pointer to the bwt file

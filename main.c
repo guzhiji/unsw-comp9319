@@ -10,9 +10,12 @@ void dump_occ(bwttext * t, unsigned char c, char * outfile) {
     FILE * ttt = fopen(outfile, "w");
     int ttc;
     unsigned long pos = 0;
+    fpos_t fpos;
     fseek(t->fp, 4, SEEK_SET);
     while ((ttc = fgetc(t->fp)) != EOF) {
+        fgetpos(t->fp, &fpos);
         fprintf(ttt, "%lu %lu\n", pos, occ(t, c, pos));
+        fsetpos(t->fp, &fpos);
         pos++;
     }
     fclose(ttt);
@@ -30,6 +33,20 @@ void dump_occ_japan() {
         sprintf(fn, "../occtest/japan.c.%d.out", i);
         dump_occ(t, (unsigned char) i, fn);
     }
+
+    bwttext_free(t);
+}
+
+void dump_occ_tiny() {
+    bwttext * t = bwttext_init("../tests/bwtsearch/5MB.bwt", "../5MB.idx", 1);
+    int i;
+    char fn[50];
+
+//    for (i = 0; i < 256; i++) {
+    i=32;
+        sprintf(fn, "../occtest/5MB.c2.%d.out", i);
+        dump_occ(t, (unsigned char) i, fn);
+//    }
 
     bwttext_free(t);
 }
@@ -99,5 +116,6 @@ int main(int argc, char **argv) {
     //    return 0;
     //--------------------------------------------------------------------------
     //    dump_occ_japan();
-    //    return 0;
+//        dump_occ_tiny();
+//            return 0;
 }

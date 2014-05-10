@@ -46,13 +46,11 @@ unsigned long compute_mem_maxchars(bwttext * t) {
     allowed = t->file_size / 2 + 2048 - t->char_num * sizeof (character) - misc;
     snapshot = sizeof (long) * t->char_num; //size for each occ snapshot
 
-    //one snapshot for each block
-    t->block_num = allowed / snapshot;
+    //block number = snapshot number + 1
+    t->block_num = allowed / snapshot + 1;
     //interval between snapshots
-    if (t->file_size % t->block_num == 0)
-        t->block_width = t->file_size / t->block_num;
-    else
-        t->block_width = t->file_size / (t->block_num - 1);
+    t->block_width = t->file_size / t->block_num;
+    if (t->file_size % t->block_num > 0) t->block_width++;
 
     //memory available for each snapshot / size of one occ value
     return OCCTABLE_MEMORY / t->block_num / sizeof (unsigned long);

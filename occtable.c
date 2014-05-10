@@ -10,19 +10,22 @@ void occtable_init(bwttext * t, int load) {
 
     if (t->char_freq_num > 0) {
 
-        // excluding the snapshot after the last block
+        // no snapshot after the last block
         n = t->char_freq_num * (t->block_num - 1);
         t->occ_freq = (unsigned long *) malloc(sizeof (unsigned long) * n);
 
-        if (load)
+        if (load) {
+            // currently not necessary as it is called after ftell()
+            // fseek(t->ifp, t->occ_freq_pos, SEEK_SET);
             fread(t->occ_freq, sizeof (unsigned long), n, t->ifp);
+        }
 
     } else {
         n = 0;
         t->occ_freq = NULL;
     }
 
-    t->occ_infreq_pos = OCCTABLE_START + n * sizeof (unsigned long);
+    t->occ_infreq_pos = t->occ_freq_pos + n * sizeof (unsigned long);
 
 }
 
@@ -86,7 +89,7 @@ void occtable_generate(bwttext * t) {
                 offset = occtable_offset(t, tch, pos);
                 if (tch->isfreq) {
                     t->occ_freq[offset] = tch->ss;
-                    fseek(t->ifp, OCCTABLE_START + offset * sizeof (unsigned long), SEEK_SET);
+                    fseek(t->ifp, t->occ_freq_pos + offset * sizeof (unsigned long), SEEK_SET);
                 } else {
                     fseek(t->ifp, t->occ_infreq_pos + offset * sizeof (unsigned long), SEEK_SET);
                 }

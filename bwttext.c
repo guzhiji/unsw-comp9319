@@ -34,32 +34,34 @@ void bwttext_index_write(bwttext * t) {
     fseek(t->ifp, 0, SEEK_SET);
 
     // file size:
-    fwrite(&t->file_size, sizeof(unsigned long), 1, t->ifp);
+    fwrite(&t->file_size, sizeof (unsigned long), 1, t->ifp);
 
     // block num:
-    fwrite(&t->block_num, sizeof(unsigned long), 1, t->ifp);
+    fwrite(&t->block_num, sizeof (unsigned long), 1, t->ifp);
 
     // block width:
-    fwrite(&t->block_width, sizeof(unsigned long), 1, t->ifp);
+    fwrite(&t->block_width, sizeof (unsigned long), 1, t->ifp);
 
     // freq char num:
-    fwrite(&t->char_freq_num, sizeof(short), 1, t->ifp);
+    fwrite(&t->char_freq_num, sizeof (short), 1, t->ifp);
 
     // char num:
     // maximum 256, fit it in 1 byte
     // since char_num can't be 0
     num = (unsigned char) (t->char_num - 1);
-    fwrite(&num, sizeof(unsigned char), 1, t->ifp);
+    fwrite(&num, sizeof (unsigned char), 1, t->ifp);
+
+    t->occ_freq_pos = ftell(t->ifp);
 
     // OCC TABLE:
 
     occtable_init(t, 0);
-    occtable_generate(t);//requires freq
+    occtable_generate(t); //requires freq
 
-    // CHARTABLE:
+    // CHAR TABLE:
 
-    chartable_compute_ss(t);//consumes freq
-    chartable_save(t);//requires ss
+    chartable_compute_ss(t); //consumes freq
+    chartable_save(t); //requires ss
 
 }
 
@@ -68,35 +70,37 @@ void bwttext_index_load(bwttext * t) {
 
     fseek(t->ifp, 0, SEEK_SET);
     // file size:
-    fread(&t->file_size, sizeof(unsigned long), 1, t->ifp);
+    fread(&t->file_size, sizeof (unsigned long), 1, t->ifp);
 
     // block num:
-    fread(&t->block_num, sizeof(unsigned long), 1, t->ifp);
+    fread(&t->block_num, sizeof (unsigned long), 1, t->ifp);
 
     // block width:
-    fread(&t->block_width, sizeof(unsigned long), 1, t->ifp);
+    fread(&t->block_width, sizeof (unsigned long), 1, t->ifp);
 
     // freq char num:
-    fread(&t->char_freq_num, sizeof(short), 1, t->ifp);
+    fread(&t->char_freq_num, sizeof (short), 1, t->ifp);
 
     // char num:
-    fread(&num, sizeof(unsigned char), 1, t->ifp);
+    fread(&num, sizeof (unsigned char), 1, t->ifp);
     t->char_num = 1 + num;
 
+    t->occ_freq_pos = ftell(t->ifp);
+
     occtable_init(t, 1);
-    chartable_load(t);//requires occ_infreq_pos, etc.
+    chartable_load(t); //requires occ_infreq_pos, etc.
 }
 
 bwttext * bwttext_init(char * bwtfile, char * indexfile, int forceindex) {
 
-    bwttext * t = (bwttext *) malloc(sizeof(bwttext));
+    bwttext * t = (bwttext *) malloc(sizeof (bwttext));
 
     t->fp = fopen(bwtfile, "rb");
     if (t->fp == NULL) {
         bwttext_free(t);
         exit(1);
     }
-    fread(&t->end, sizeof(unsigned long), 1, t->fp);
+    fread(&t->end, sizeof (unsigned long), 1, t->fp);
 
     t->ifp = NULL;
     if (!forceindex) { // try to read
