@@ -43,7 +43,7 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         if (ch->isfreq) {
             o = t->occ_freq[o_offset];
         } else {
-            fseek(t->ifp, t->occ_infreq_pos + o_offset , SEEK_SET);
+            fseek(t->ifp, t->occ_infreq_pos + o_offset * sizeof (unsigned long) , SEEK_SET);
             fread(&o, sizeof(unsigned long), 1, t->ifp);
         }
     }

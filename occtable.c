@@ -56,7 +56,7 @@ unsigned long bwtblock_offset(bwttext * t, unsigned long pos) {
 
 void occtable_generate(bwttext * t) {
 
-    character * ch;
+    character * ch, * tch;
     unsigned long blocks, n, pos, offset;
     int ic;
 
@@ -81,16 +81,16 @@ void occtable_generate(bwttext * t) {
             // at the first char after the first block
             // create an occ snapshot for all chars for the preceding block
             for (ic = 0; ic < t->char_num; ic++) {
-                ch = &t->char_table[ic];
+                tch = &t->char_table[ic];
                 // find the position where occ is stored
-                offset = occtable_offset(t, ch, pos);
-                if (ch->isfreq) {
-                    t->occ_freq[offset] = ch->ss;
-                    fseek(t->ifp, OCCTABLE_START + offset, SEEK_SET);
+                offset = occtable_offset(t, tch, pos);
+                if (tch->isfreq) {
+                    t->occ_freq[offset] = tch->ss;
+                    fseek(t->ifp, OCCTABLE_START + offset * sizeof (unsigned long), SEEK_SET);
                 } else {
-                    fseek(t->ifp, t->occ_infreq_pos + offset, SEEK_SET);
+                    fseek(t->ifp, t->occ_infreq_pos + offset * sizeof (unsigned long), SEEK_SET);
                 }
-                fwrite(&ch->ss, sizeof (unsigned long), 1, t->ifp);
+                fwrite(&tch->ss, sizeof (unsigned long), 1, t->ifp);
             }
         } else if (n == t->block_width) {
             // a block of block_width is read
