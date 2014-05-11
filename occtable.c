@@ -72,9 +72,17 @@ unsigned int _blkoffset_lookup(unsigned long * s, unsigned int l, unsigned long 
     // the block after snapshot i-1 is block i;
     // even for the one before snapshot 0,
     // it is block 0
-    for (i = 0; i < l; i++)
+    for (i = 0; i < l; i++) {
         if (occ < s[i])
             return i;
+        // A problem arises because of change of block width 
+        // after finding that file size isn't divideable by 
+        // block number in compute_mem_maxchars() of chartable.c.
+        // Consequently, there can be some slots not being used here,
+        // so more code is added to detect the issue.
+        if (i > 0 && s[i - 1] > 0 && s[i] == 0)
+            return i - 1;
+    }
     // after all snapshots,
     // or after the last snapshot, snapshot l-1,
     // it is block l (since blocks=snapshots+1)
@@ -96,10 +104,10 @@ void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsi
 
     } else {
         unsigned long buf[1024];
-        unsigned int bl, rl, i;//buf len, remaining len
+        unsigned int bl, rl, i; //buf len, remaining len
         // same logic
-        
-        fseek(t->ifp, t->occ_infreq_pos + offset * sizeof(unsigned long), SEEK_SET);
+
+        fseek(t->ifp, t->occ_infreq_pos + offset * sizeof (unsigned long), SEEK_SET);
 
         // _blkoffset_lookup() by buf
         blk = 0;
@@ -111,19 +119,17 @@ void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsi
             else
                 rl -= bl = rl;
 
-            fread(buf, sizeof(unsigned long), bl, t->ifp);
+            fread(buf, sizeof (unsigned long), bl, t->ifp);
             blk += i = _blkoffset_lookup(buf, bl, occ);
-            if (i < bl) {
-                // before the last snapshot within the current buf
+            if (i < bl) // before the last snapshot within the current buf
                 break;
-            }
 
         } while (rl > 0);
 
         if (blk > 0) {
 
-            fseek(t->ifp, t->occ_infreq_pos + (offset + blk - 1) * sizeof(unsigned long), SEEK_SET);
-            fread(occ_start, sizeof(unsigned long), 1, t->ifp);
+            fseek(t->ifp, t->occ_infreq_pos + (offset + blk - 1) * sizeof (unsigned long), SEEK_SET);
+            fread(occ_start, sizeof (unsigned long), 1, t->ifp);
 
         }
 
@@ -134,8 +140,6 @@ void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsi
     *blk_offset = blk * t->block_width;
 
 }
-
-
 
 void occtable_generate(bwttext * t) {
 

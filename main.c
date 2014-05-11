@@ -61,13 +61,16 @@ void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
     fpos_t fpos;
     fseek(t->fp, 4, SEEK_SET);
     fprintf(fout, "\n%d:\n", c);
-    fprintf(fout, "%s\t%s\t%s\t%s\n", "occ", "pos", "lpos()", "lpos2()");
+    //    fprintf(fout, "%s\t%s\t%s\t%s\n", "occ", "pos", "lpos()", "lpos2()");
+    fprintf(fout, "%s\t%s\t%s\n", "occ", "pos", "lpos()");
     while ((ic = fgetc(t->fp)) != EOF) {
         fgetpos(t->fp, &fpos);
         if (c == ic) {
             lp1 = lpos(t, c, occ);
-            lp2 = lpos2(t, c, occ);
-            fprintf(fout, "%lu\t%lu\t%lu\t%lu\n", occ, pos, lp1, lp2);
+            fprintf(fout, "%lu\t%lu\t%lu\n", occ, pos, lp1);
+            //            fprintf(fout, "%lu\t%lu\t%lu\n", occ, pos, pos);
+            //            lp2 = lpos2(t, c, occ);
+            //            fprintf(fout, "%lu\t%lu\t%lu\t%lu\n", occ, pos, lp1, lp2);
             //            fprintf(fout, "%lu\t%lu\t%lu\t%lu\n", occ, pos, pos, pos);
             occ++;
         }
@@ -77,12 +80,14 @@ void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
 }
 
 void dump_lpos_japan() {
-    bwttext * t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
-    int i;
+    bwttext * t = bwttext_init("../tests/bwtsearch/5MB.bwt", "../5MB.idx", 1);
+    //    int i;
 
-    for (i = 0; i < 256; i++) {
-        dump_lpos(t, (unsigned char) i, stdout);
-    }
+    //        dump_lpos(t, (unsigned char) 32, stdout);
+    dump_lpos(t, 'P', stdout);
+    //    for (i = 0; i < 256; i++) {
+    //        dump_lpos(t, (unsigned char) i, stdout);
+    //    }
 
     bwttext_free(t);
 }

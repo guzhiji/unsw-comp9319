@@ -254,7 +254,7 @@ void search(bwttext * t, unsigned char * p, unsigned int l) {
         unsigned long i, p;
         pset * ps = pset_init();
 
-        printf("found between f-l=%lu-%lu\n", r->first, r->last);
+        //printf("found between f-l=%lu-%lu\n", r->first, r->last);
 
         for (i = r->first; i <= r->last; i++) {
 
