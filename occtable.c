@@ -85,21 +85,23 @@ unsigned int _blkoffset_lookup(unsigned long * s, unsigned int l, unsigned long 
 void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsigned long * blk_offset, unsigned long * occ_start) {
     unsigned long l, offset, blk;
 
-    l = t->block_num - 1; // snapshot number
-    offset = ch->i * l; // start
+    l = t->block_num - 1; // snapshot count
+    offset = ch->i * l; // start position of the char
 
     if (ch->isfreq) {
 
         blk = _blkoffset_lookup(&t->occ_freq[offset], l, occ);
-        if (blk > 0)
-            *occ_start = t->occ_freq[offset + blk - 1];
+        if (blk > 0) // for block 0, occ starts from 0, not stored
+            *occ_start = t->occ_freq[offset + blk - 1]; // char start + snapshot index
 
     } else {
         unsigned long buf[1024];
         unsigned int bl, rl, i;//buf len, remaining len
-
+        // same logic
+        
         fseek(t->ifp, t->occ_infreq_pos + offset * sizeof(unsigned long), SEEK_SET);
 
+        // _blkoffset_lookup() by buf
         blk = 0;
         rl = l;
         do {
@@ -111,8 +113,10 @@ void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsi
 
             fread(buf, sizeof(unsigned long), bl, t->ifp);
             blk += i = _blkoffset_lookup(buf, bl, occ);
-            if (i < bl)
+            if (i < bl) {
+                // before the last snapshot within the current buf
                 break;
+            }
 
         } while (rl > 0);
 
@@ -127,7 +131,7 @@ void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsi
 
     if (blk == 0)
         *occ_start = 0;
-    *blk_offset = blk;
+    *blk_offset = blk * t->block_width;
 
 }
 

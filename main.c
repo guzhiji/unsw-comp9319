@@ -37,16 +37,52 @@ void dump_occ_japan() {
     bwttext_free(t);
 }
 
-void dump_occ_tiny() {
-    bwttext * t = bwttext_init("../tests/bwtsearch/5MB.bwt", "../5MB.idx", 1);
-    int i;
-    char fn[50];
+unsigned long lpos2(bwttext * t, unsigned char c, unsigned long occ) {
+    int i, r;
+    unsigned long n = 0, p = 0;
+    unsigned char cblk[1024];
 
-//    for (i = 0; i < 256; i++) {
-    i=32;
-        sprintf(fn, "../occtest/5MB.c2.%d.out", i);
-        dump_occ(t, (unsigned char) i, fn);
-//    }
+    fseek(t->fp, 4, SEEK_SET);
+
+    do {
+        r = fread(&cblk, sizeof (unsigned char), 1024, t->fp);
+        for (i = 0; i < r; i++) {
+            if (cblk[i] == c && n++ == occ)
+                return p;
+            p++;
+        }
+    } while (r > 0);
+    return p;
+}
+
+void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
+    int ic;
+    unsigned long occ = 0, pos = 0, lp1, lp2;
+    fpos_t fpos;
+    fseek(t->fp, 4, SEEK_SET);
+    fprintf(fout, "\n%d:\n", c);
+    fprintf(fout, "%s\t%s\t%s\t%s\n", "occ", "pos", "lpos()", "lpos2()");
+    while ((ic = fgetc(t->fp)) != EOF) {
+        fgetpos(t->fp, &fpos);
+        if (c == ic) {
+            lp1 = lpos(t, c, occ);
+            lp2 = lpos2(t, c, occ);
+            fprintf(fout, "%lu\t%lu\t%lu\t%lu\n", occ, pos, lp1, lp2);
+            //            fprintf(fout, "%lu\t%lu\t%lu\t%lu\n", occ, pos, pos, pos);
+            occ++;
+        }
+        fsetpos(t->fp, &fpos);
+        pos++;
+    }
+}
+
+void dump_lpos_japan() {
+    bwttext * t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
+    int i;
+
+    for (i = 0; i < 256; i++) {
+        dump_lpos(t, (unsigned char) i, stdout);
+    }
 
     bwttext_free(t);
 }
@@ -74,7 +110,6 @@ int main(int argc, char **argv) {
 
         char * opt_o = "-o";
         bwttext * t = bwttext_init(argv[1], argv[2], 0);
-        printf("filesize=%lu\n", t->file_size);
 
         if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
             // 3: "-o"
@@ -116,6 +151,6 @@ int main(int argc, char **argv) {
     //    return 0;
     //--------------------------------------------------------------------------
     //    dump_occ_japan();
-//        dump_occ_tiny();
-//            return 0;
+    //    dump_lpos_japan();
+    //    return 0;
 }

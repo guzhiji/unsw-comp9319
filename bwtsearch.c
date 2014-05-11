@@ -42,8 +42,8 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
         o_offset = occtable_offset(t, ch, pos);
         if (ch->isfreq) {
             o = t->occ_freq[o_offset];
-//            fseek(t->ifp, t->occ_freq_pos + o_offset * sizeof (unsigned long), SEEK_SET);
-//            fread(&o, sizeof (unsigned long), 1, t->ifp);
+            //            fseek(t->ifp, t->occ_freq_pos + o_offset * sizeof (unsigned long), SEEK_SET);
+            //            fread(&o, sizeof (unsigned long), 1, t->ifp);
         } else {
             fseek(t->ifp, t->occ_infreq_pos + o_offset * sizeof (unsigned long), SEEK_SET);
             fread(&o, sizeof (unsigned long), 1, t->ifp);
@@ -126,7 +126,7 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
 }
 
 /**
- * find the first char as the given occurance occ of c 
+ * find the first position as the given occurance occ of c 
  * in BWT text (pos - position),
  * the last column in the rotation matrix of the 
  * original text (l - last column).
@@ -140,11 +140,13 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
         exit(1);
     }
 
+    // locate block based on occ value
+    // get initial status of position p and occ n
     bwtblock_offset_lookup(t, ch, occ, &p, &n);
-    if (n == occ) return p;
 
     // count occ until the given occ
-    fseek(t->fp, 4 + p * sizeof(unsigned char), SEEK_SET);
+    // (the position should be found within the block)
+    fseek(t->fp, 4 + p, SEEK_SET);
     {
         unsigned char cblk[1024];
         int r, i;
