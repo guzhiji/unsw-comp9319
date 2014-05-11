@@ -57,6 +57,82 @@ unsigned long bwtblock_offset(bwttext * t, unsigned long pos) {
     return pos / t->block_width * t->block_width;
 }
 
+/**
+ * look up block offset through occ snapshots
+ *
+ * @param s     snapshots (occ values)
+ * @param l     number of snapshots
+ * @param occ   the target occ value
+ */
+unsigned int _blkoffset_lookup(unsigned long * s, unsigned int l, unsigned long occ) {
+    unsigned int i;
+
+    // if it isn't after snapshot i,
+    // it is snapshot i-1;
+    // the block after snapshot i-1 is block i;
+    // even for the one before snapshot 0,
+    // it is block 0
+    for (i = 0; i < l; i++)
+        if (occ < s[i])
+            return i;
+    // after all snapshots,
+    // or after the last snapshot, snapshot l-1,
+    // it is block l (since blocks=snapshots+1)
+    return l;
+
+}
+
+void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsigned long * blk_offset, unsigned long * occ_start) {
+    unsigned long l, offset, blk;
+
+    l = t->block_num - 1; // snapshot number
+    offset = ch->i * l; // start
+
+    if (ch->isfreq) {
+
+        blk = _blkoffset_lookup(&t->occ_freq[offset], l, occ);
+        if (blk > 0)
+            *occ_start = t->occ_freq[offset + blk - 1];
+
+    } else {
+        unsigned long buf[1024];
+        unsigned int bl, rl, i;//buf len, remaining len
+
+        fseek(t->ifp, t->occ_infreq_pos + offset * sizeof(unsigned long), SEEK_SET);
+
+        blk = 0;
+        rl = l;
+        do {
+
+            if (rl > 1024)
+                rl -= bl = 1024;
+            else
+                rl -= bl = rl;
+
+            fread(buf, sizeof(unsigned long), bl, t->ifp);
+            blk += i = _blkoffset_lookup(buf, bl, occ);
+            if (i < bl)
+                break;
+
+        } while (rl > 0);
+
+        if (blk > 0) {
+
+            fseek(t->ifp, t->occ_infreq_pos + (offset + blk - 1) * sizeof(unsigned long), SEEK_SET);
+            fread(occ_start, sizeof(unsigned long), 1, t->ifp);
+
+        }
+
+    }
+
+    if (blk == 0)
+        *occ_start = 0;
+    *blk_offset = blk;
+
+}
+
+
+
 void occtable_generate(bwttext * t) {
 
     character * ch, * tch;

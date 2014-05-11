@@ -125,32 +125,43 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
     return p;
 }
 
+/**
+ * find the first char as the given occurance occ of c 
+ * in BWT text (pos - position),
+ * the last column in the rotation matrix of the 
+ * original text (l - last column).
+ */
 unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
-    //int tc;
-    int i, r;
-    unsigned long n = 0, p = 0;
-    unsigned char cblk[1024];
+    character * ch;
+    unsigned long n, p; // number of occ, char position
 
-    fseek(t->fp, 4, SEEK_SET);
-
-    do {
-        r = fread(&cblk, sizeof (unsigned char), 1024, t->fp);
-        for (i = 0; i < r; i++) {
-            if (cblk[i] == c && n++ == occ)
-                return p;
-            p++;
-        }
-    } while (r > 0);
-
-    /*
-    while ((tc = fgetc(t->fp)) != EOF) {
-        if (tc == c && n++ == occ)
-            return p;
-        p++;
+    ch = t->char_hash[c];
+    if (ch == NULL) {
+        exit(1);
     }
-     */
 
+    bwtblock_offset_lookup(t, ch, occ, &p, &n);
+    if (n == occ) return p;
+
+    // count occ until the given occ
+    fseek(t->fp, 4 + p * sizeof(unsigned char), SEEK_SET);
+    {
+        unsigned char cblk[1024];
+        int r, i;
+
+        do {
+            r = fread(cblk, sizeof (unsigned char), 1024, t->fp);
+            for (i = 0; i < r; i++) {
+                // when c occurs, n is compared against occ before it counts;
+                if (cblk[i] == c && n++ == occ)
+                    return p; // p is returned before it counts the current position
+                p++;
+            }
+        } while (r > 0);
+
+    }
     return p;
+
 }
 
 void decode_backward(bwttext * t, FILE * fout) {
