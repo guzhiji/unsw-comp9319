@@ -2,6 +2,7 @@
 #include "bwtsearch.h"
 
 #include "bwttext.h"
+#include "bwtblock.h"
 #include "occtable.h"
 #include "strbuf.h"
 #include "pset.h"
@@ -28,48 +29,59 @@ unsigned long char_freq(bwttext * t, character * ch_o) {
 unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
 
     character * ch;
-    int ic;
-    unsigned long o, o_offset, c_pos;
+    bwtblock_start start;
+    unsigned long offset;
+//    int ic;
+//    unsigned long o, c_pos;
 
     ch = t->char_hash[c];
+    
+    // a char never occurred
     if (ch == NULL)
         return 0;
 
+    // occ at the beginning of a block
     if (pos < t->block_width) {
         // before the first snapshot
-        o = 0;
+        start.occ = 0;
     } else {
-        o_offset = occtable_offset(t, ch, pos);
+        offset = occtable_offset(t, ch, pos);
         if (ch->isfreq) {
-            o = t->occ_freq[o_offset];
-            //            fseek(t->ifp, t->occ_freq_pos + o_offset * sizeof (unsigned long), SEEK_SET);
-            //            fread(&o, sizeof (unsigned long), 1, t->ifp);
+            start.occ = t->occ_freq[offset];
+            //fseek(t->ifp, t->occ_freq_pos + offset * sizeof (unsigned long), SEEK_SET);
+            //fread(&start.occ, sizeof (unsigned long), 1, t->ifp);
         } else {
-            fseek(t->ifp, t->occ_infreq_pos + o_offset * sizeof (unsigned long), SEEK_SET);
-            fread(&o, sizeof (unsigned long), 1, t->ifp);
+            fseek(t->ifp, t->occ_infreq_pos + offset * sizeof (unsigned long), SEEK_SET);
+            fread(&start.occ, sizeof (unsigned long), 1, t->ifp);
         }
     }
 
-    c_pos = bwtblock_offset(t, pos);
-    if (c_pos == pos) return o;
-
-    fseek(t->fp, 4 + c_pos, SEEK_SET);
-    {
-        unsigned char buf[1024];
-        int r;
-        do {
-            r = fread(buf, sizeof (unsigned char), 1024, t->fp);
-            for (ic = 0; ic < r; ic++) {
-                if (pos == c_pos++) return o;
-                if (buf[ic] == c) o++;
-            }
-        } while (r > 0);
-    }
+    // where is the block
+    start.offset = bwtblock_offset(t, pos);
+    
+    // exactly the beginning, return directly
+    if (start.offset == pos) return start.occ;
+    // otherwise look into the block
+    return bwtblock_occ(t, &start, c, pos);
+    
+// TODO encapsulation: caching
+//    fseek(t->fp, 4 + c_pos, SEEK_SET);
+//    {
+//        unsigned char buf[1024];
+//        int r;
+//        do {
+//            r = fread(buf, sizeof (unsigned char), 1024, t->fp);
+//            for (ic = 0; ic < r; ic++) {
+//                if (pos == c_pos++) return o;
+//                if (buf[ic] == c) o++;
+//            }
+//        } while (r > 0);
+//    }
     //    while ((ic = fgetc(t->fp)) != EOF) {
     //        if (pos == c_pos++) return o;
     //        if (ic == c) o++;
     //    }
-    return o;
+//    return o;
 
 }
 
@@ -133,7 +145,8 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
  */
 unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
     character * ch;
-    unsigned long n, p; // number of occ, char position
+    bwtblock_start start;
+//    unsigned long n, p;
 
     ch = t->char_hash[c];
     if (ch == NULL) {
@@ -142,27 +155,30 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
 
     // locate block based on occ value
     // get initial status of position p and occ n
-    bwtblock_offset_lookup(t, ch, occ, &p, &n);
-
-    // count occ until the given occ
-    // (the position should be found within the block)
-    fseek(t->fp, 4 + p, SEEK_SET);
-    {
-        unsigned char cblk[1024];
-        int r, i;
-
-        do {
-            r = fread(cblk, sizeof (unsigned char), 1024, t->fp);
-            for (i = 0; i < r; i++) {
-                // when c occurs, n is compared against occ before it counts;
-                if (cblk[i] == c && n++ == occ)
-                    return p; // p is returned before it counts the current position
-                p++;
-            }
-        } while (r > 0);
-
-    }
-    return p;
+    bwtblock_start_lookup(t, ch, occ, &start);
+    
+    return bwtblock_occ_position(t, &start, c, occ);
+    
+// TODO encapsulation: caching
+//    // count occ until the given occ
+//    // (the position should be found within the block)
+//    fseek(t->fp, 4 + p, SEEK_SET);
+//    {
+//        unsigned char cblk[1024];
+//        int r, i;
+//
+//        do {
+//            r = fread(cblk, sizeof (unsigned char), 1024, t->fp);
+//            for (i = 0; i < r; i++) {
+//                // when c occurs, n is compared against occ before it counts;
+//                if (cblk[i] == c && n++ == occ)
+//                    return p; // p is returned before it counts the current position
+//                p++;
+//            }
+//        } while (r > 0);
+//
+//    }
+//    return p;
 
 }
 
