@@ -9,6 +9,17 @@ typedef struct {
     unsigned long offset;
 } bwtblock_start;
 
+typedef struct {
+    unsigned char * data;
+    unsigned int size;
+} bwtblock_cached_data;
+
+typedef struct {
+    unsigned long offset;
+    unsigned char data[1024];
+    unsigned int visits;
+} bwtblock_cached_block;
+
 unsigned long bwtblock_offset(bwttext * t, unsigned long pos);
 
 void bwtblock_start_lookup(bwttext * t, character * ch, unsigned long occ, bwtblock_start * start);

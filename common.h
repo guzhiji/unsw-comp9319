@@ -7,13 +7,8 @@
 
 #include <stdio.h>
 
-#define OCCTABLE_MEMORY 1024 * 1024 * 5
-
-//-----------------------------
-//performance seems better, but index is too large
-//#define BWTBLOCK_PURE_MIN 10
-//#define BWTBLOCK_IMPURE_MAX 2048
-//#define BWTBLOCK_INDEX_SIZE 2024
+#define MEMORY_OCCTABLE 1024 * 1024 * 3
+#define MEMORY_CHARCACHE 1024 * 1024 * 2
 
 typedef struct {
     unsigned char c;
@@ -37,7 +32,8 @@ typedef struct {
     unsigned short char_num;
     character char_table[256];
     character * char_hash[256];
-
+    unsigned char char_cache[1024];
+    
     FILE * fp; //file pointer to the bwt file
     FILE * ifp; //file pointer to the index file
 } bwttext;

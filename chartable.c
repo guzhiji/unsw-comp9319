@@ -53,7 +53,7 @@ unsigned long compute_mem_maxchars(bwttext * t) {
     if (t->file_size % t->block_num > 0) t->block_width++;
 
     //memory available for each snapshot / size of one occ value
-    return OCCTABLE_MEMORY / t->block_num / sizeof (unsigned long);
+    return MEMORY_OCCTABLE / t->block_num / sizeof (unsigned long);
 
 }
 

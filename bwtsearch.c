@@ -31,11 +31,9 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
     character * ch;
     bwtblock_start start;
     unsigned long offset;
-//    int ic;
-//    unsigned long o, c_pos;
 
     ch = t->char_hash[c];
-    
+
     // a char never occurred
     if (ch == NULL)
         return 0;
@@ -58,30 +56,11 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
 
     // where is the block
     start.offset = bwtblock_offset(t, pos);
-    
+
     // exactly the beginning, return directly
     if (start.offset == pos) return start.occ;
     // otherwise look into the block
     return bwtblock_occ(t, &start, c, pos);
-    
-// TODO encapsulation: caching
-//    fseek(t->fp, 4 + c_pos, SEEK_SET);
-//    {
-//        unsigned char buf[1024];
-//        int r;
-//        do {
-//            r = fread(buf, sizeof (unsigned char), 1024, t->fp);
-//            for (ic = 0; ic < r; ic++) {
-//                if (pos == c_pos++) return o;
-//                if (buf[ic] == c) o++;
-//            }
-//        } while (r > 0);
-//    }
-    //    while ((ic = fgetc(t->fp)) != EOF) {
-    //        if (pos == c_pos++) return o;
-    //        if (ic == c) o++;
-    //    }
-//    return o;
 
 }
 
@@ -138,7 +117,7 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
 }
 
 /**
- * find the first position as the given occurance occ of c 
+ * find the first position as the given occurence occ of c 
  * in BWT text (pos - position),
  * the last column in the rotation matrix of the 
  * original text (l - last column).
@@ -146,39 +125,18 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
 unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
     character * ch;
     bwtblock_start start;
-//    unsigned long n, p;
 
     ch = t->char_hash[c];
     if (ch == NULL) {
+        fprintf(stderr, "\nerror: char code=%d\n", c);
         exit(1);
     }
 
     // locate block based on occ value
     // get initial status of position p and occ n
     bwtblock_start_lookup(t, ch, occ, &start);
-    
+
     return bwtblock_occ_position(t, &start, c, occ);
-    
-// TODO encapsulation: caching
-//    // count occ until the given occ
-//    // (the position should be found within the block)
-//    fseek(t->fp, 4 + p, SEEK_SET);
-//    {
-//        unsigned char cblk[1024];
-//        int r, i;
-//
-//        do {
-//            r = fread(cblk, sizeof (unsigned char), 1024, t->fp);
-//            for (i = 0; i < r; i++) {
-//                // when c occurs, n is compared against occ before it counts;
-//                if (cblk[i] == c && n++ == occ)
-//                    return p; // p is returned before it counts the current position
-//                p++;
-//            }
-//        } while (r > 0);
-//
-//    }
-//    return p;
 
 }
 
