@@ -185,25 +185,62 @@ void decode_backward(bwttext * t, FILE * fout) {
 }
 
 void decode_backward_rev(bwttext * t, FILE * fout) {
-    unsigned char c;
     character * ch;
+    unsigned char c;
+    unsigned long dp;
     unsigned long p = t->end;
-    unsigned long dp = t->file_size - 1;
+    unsigned char buf[1024];
+    int bufcur;
 
+    bufcur = 1023;
+
+    // start from the last buf
+    if (t->file_size > 1024)
+        dp = t->file_size - 1024;
+    else
+        dp = t->file_size - 1;
     fseek(fout, dp, SEEK_SET);
+
     do {
+        // read
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        fputc(c, fout);
-        fseek(fout, -2, SEEK_CUR);
-        dp--;
+        buf[bufcur--] = c;
+
+        // write by buf
+        if (bufcur == -1) { // buf is just full
+            fwrite(buf, sizeof(unsigned char), 1024, fout);
+            bufcur = 1023;
+            // start of next buf
+            if (dp >= 1024) {
+                fseek(fout, -2048, SEEK_CUR);
+                dp -= 1024;
+            } else {
+                fseek(fout, 0, SEEK_SET);
+                dp = 0;
+            }
+        }
+        //fputc(c, fout);
+        //fseek(fout, -2, SEEK_CUR);
+        //dp--;
+
         ch = t->char_hash[(unsigned int) c];
+
+        // nothing but error detection
         if (ch == NULL || dp < 0) {
             fprintf(stderr, "\nerror: char code=%d\n, bwt pos=%lu, dest pos=%lu", c, p, dp);
             break; // error
         }
+
+        // next position
         p = ch->ss + occ(t, c, p);
+
     } while (p != t->end);
+
+    // flush buf
+    if (bufcur < 1023) // something's in buf if cursor is before the very end
+        fwrite(&buf[bufcur + 1], sizeof(unsigned char), 1023 - bufcur, fout);
+
 }
 
 /**
