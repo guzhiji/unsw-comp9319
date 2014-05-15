@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #define OCCTABLE_MEMORY 1024 * 1024 * 5
+#define BUF_SIZE 1024 * 1024
 
 //-----------------------------
 //performance seems better, but index is too large

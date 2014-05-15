@@ -187,19 +187,22 @@ void decode_backward(bwttext * t, FILE * fout) {
 void decode_backward_rev(bwttext * t, FILE * fout) {
     character * ch;
     unsigned char c;
+    unsigned long p;
     unsigned long dp;
-    unsigned long p = t->end;
-    unsigned char buf[1024];
+    unsigned char buf[BUF_SIZE];
     int bufcur;
 
-    bufcur = 1023;
+
+    p = t->end;
 
     // start from the last buf
-    if (t->file_size > 1024)
-        dp = t->file_size - 1024;
+    if (t->file_size > BUF_SIZE)
+        dp = t->file_size - BUF_SIZE;
     else
-        dp = t->file_size - 1;
+        dp = 0;
     fseek(fout, dp, SEEK_SET);
+
+    bufcur = BUF_SIZE - 1;
 
     do {
         // read
@@ -209,17 +212,18 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
 
         // write by buf
         if (bufcur == -1) { // buf is just full
-            fwrite(buf, sizeof(unsigned char), 1024, fout);
-            bufcur = 1023;
+            fwrite(buf, sizeof(unsigned char), BUF_SIZE, fout);
+            bufcur = BUF_SIZE - 1;
             // start of next buf
-            if (dp >= 1024) {
-                fseek(fout, -2048, SEEK_CUR);
-                dp -= 1024;
+            if (dp >= BUF_SIZE) {
+                fseek(fout, -BUF_SIZE * 2, SEEK_CUR);
+                dp -= BUF_SIZE;
             } else {
                 fseek(fout, 0, SEEK_SET);
                 dp = 0;
             }
         }
+        // write by char
         //fputc(c, fout);
         //fseek(fout, -2, SEEK_CUR);
         //dp--;
@@ -238,8 +242,8 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
     } while (p != t->end);
 
     // flush buf
-    if (bufcur < 1023) // something's in buf if cursor is before the very end
-        fwrite(&buf[bufcur + 1], sizeof(unsigned char), 1023 - bufcur, fout);
+    if (bufcur < BUF_SIZE - 1) // something's in buf if cursor is before the very end
+        fwrite(&buf[bufcur + 1], sizeof(unsigned char), BUF_SIZE - 1 - bufcur, fout);
 
 }
 
