@@ -73,17 +73,54 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
 
 }
 
-fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
+fpos_range * search_forward(bwttext * t, unsigned char * p, unsigned int l) {
+
+    fpos_range * r;
+    unsigned long o, fp, lp, tp;
+    character * ch;
+    unsigned char x;
+    int pp, tpp;
+
+    if (l < 1) return NULL;
+    r = (fpos_range *) malloc(sizeof (fpos_range));
+    pp = 0;
+    while (pp < l) {
+
+        x = p[pp++];
+        ch = t->char_hash[x];
+        if (ch == NULL) {
+            free(r);
+            return NULL;
+        }
+        o = char_freq(t, ch) - 1;
+        fp = ch->ss;
+        lp = ch->ss + o;
+        tpp = pp - 2;
+        while (tpp >= 0) {
+            ch = t->char_hash[p[tpp--]];
+            tp = ch->ss + occ(t, ch->c, fp);
+            lp = ch->ss + occ(t, ch->c, lp + 1) - 1;
+            if (tp == lp + 1 && tp < fp) {
+                free(r);
+                return NULL;
+            }
+            fp = tp;
+        }
+        r->first = fp;
+        r->last = lp;
+
+    }
+
+    return r;
+
+}
+
+fpos_range * search_backward(bwttext * t, unsigned char * p, unsigned int l) {
 
     fpos_range * r;
     character * c;
     unsigned int pp;
     unsigned char x;
-
-    //dump_chartable(t);
-    //dump_pos(t);
-
-    r = (fpos_range *) malloc(sizeof (fpos_range));
 
     pp = l - 1;
     x = p[pp];
@@ -91,6 +128,7 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
     c = t->char_hash[(unsigned int) x];
     if (c == NULL) return NULL;
 
+    r = (fpos_range *) malloc(sizeof (fpos_range));
     r->first = c->ss;
     r->last = r->first + char_freq(t, c) - 1;
     //printf("%c: %lu, %lu\n", x, r->first, r->last);
@@ -98,7 +136,10 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
     while (r->first <= r->last && pp > 0) {
         x = p[--pp];
         c = t->char_hash[(unsigned int) x];
-        if (c == NULL) return NULL;
+        if (c == NULL) {
+            free(r);
+            return NULL;
+        }
 
         //printf("[%lu, %lu, %lu]\n", c->ss, occ(t, x, r->first), occ(t, x, r->last + 1) - 1);
         r->first = c->ss + occ(t, x, r->first);
@@ -108,6 +149,7 @@ fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l) {
     }
 
     if (r->first <= r->last) return r;
+    free(r);
     return NULL;
 
 }
@@ -212,7 +254,7 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
 
         // write by buf
         if (bufcur == -1) { // buf is just full
-            fwrite(buf, sizeof(unsigned char), BUF_SIZE, fout);
+            fwrite(buf, sizeof (unsigned char), BUF_SIZE, fout);
             bufcur = BUF_SIZE - 1;
             // start of next buf
             if (dp >= BUF_SIZE) {
@@ -243,7 +285,7 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
 
     // flush buf
     if (bufcur < BUF_SIZE - 1) // something's in buf if cursor is before the very end
-        fwrite(&buf[bufcur + 1], sizeof(unsigned char), BUF_SIZE - 1 - bufcur, fout);
+        fwrite(&buf[bufcur + 1], sizeof (unsigned char), BUF_SIZE - 1 - bufcur, fout);
 
 }
 
@@ -290,7 +332,8 @@ unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char
 
 void search(bwttext * t, unsigned char * p, unsigned int l) {
 
-    fpos_range * r = search_fpos_range(t, p, l);
+    //    fpos_range * r = search_backward(t, p, l);
+    fpos_range * r = search_forward(t, p, l);
     if (r != NULL) {
         unsigned long i, p;
         pset * ps = pset_init();

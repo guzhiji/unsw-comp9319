@@ -19,7 +19,11 @@ typedef struct {
  * @param l     length of the pattern
  * @return      range in the first column of the BWT rotation matrix
  */
-fpos_range * search_fpos_range(bwttext * t, unsigned char * p, unsigned int l);
+fpos_range * search_backward(bwttext * t, unsigned char * p, unsigned int l);
+
+fpos_range * search_forward(bwttext * t, unsigned char * p, unsigned int l);
+
+unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ);
 
 void search(bwttext * t, unsigned char * p, unsigned int l);
 
