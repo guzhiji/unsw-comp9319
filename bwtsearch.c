@@ -4,7 +4,7 @@
 #include "bwttext.h"
 #include "occtable.h"
 #include "strbuf.h"
-#include "pset.h"
+#include "plset.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -208,6 +208,10 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
 
 }
 
+/**
+ * not in-use: backward decoding reverses data;
+ * but essentially this is the algorithm
+ */
 void decode_backward(bwttext * t, FILE * fout) {
     unsigned char c;
     character * ch;
@@ -215,13 +219,13 @@ void decode_backward(bwttext * t, FILE * fout) {
     do {
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        //putchar(c);
-        fputc(c, fout);
         ch = t->char_hash[(unsigned int) c];
         if (ch == NULL) {
             fprintf(stderr, "\nerror: char code=%d\n", c);
             break; // error
         }
+        //putchar(c);
+        fputc(c, fout);
         p = ch->ss + occ(t, c, p);
     } while (p != t->end);
 }
@@ -229,11 +233,9 @@ void decode_backward(bwttext * t, FILE * fout) {
 void decode_backward_rev(bwttext * t, FILE * fout) {
     character * ch;
     unsigned char c;
-    unsigned long p;
-    unsigned long dp;
+    unsigned long p, dp;
     unsigned char buf[BUF_SIZE];
     int bufcur;
-
 
     p = t->end;
 
@@ -265,6 +267,7 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
                 dp = 0;
             }
         }
+
         // write by char
         //fputc(c, fout);
         //fseek(fout, -2, SEEK_CUR);
@@ -273,7 +276,7 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
         ch = t->char_hash[(unsigned int) c];
 
         // nothing but error detection
-        if (ch == NULL || dp < 0) {
+        if (ch == NULL || dp < 0) { // TODO well, dp is unsigned...
             fprintf(stderr, "\nerror: char code=%d\n, bwt pos=%lu, dest pos=%lu", c, p, dp);
             break; // error
         }
@@ -290,74 +293,118 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
 }
 
 /**
- * pos_prev is a fpos; it gets its previous char at it's lpos.
+ * pos is a fpos
  */
-unsigned long decode_backward_until(bwttext * t, unsigned long pos_prev, unsigned char until, strbuf * sb) {
+unsigned long decode_backward_until(bwttext * t, unsigned long pos, unsigned char until, int inclusive, strbuf * sb) {
     character * ch;
     unsigned char c;
-    unsigned long p = pos_prev;
+    unsigned long p = pos;
     do {
+
+        // p is a fpos; it gets its previous char in the the last column
         fseek(t->fp, p + 4, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
-        if (until != c) {
-            strbuf_putchar(sb, c);
-            ch = t->char_hash[(unsigned int) c];
-            if (ch == NULL) {
-                fprintf(stderr, "\nerror: char code=%d\n", c);
-                break; // error
-            }
-            p = ch->ss + occ(t, c, p);
+
+        // the char should exist
+        ch = t->char_hash[(unsigned int) c];
+        if (ch == NULL) {
+            fprintf(stderr, "\nerror: char code=%d\n", c);
+            break; // error
         }
-    } while (p != t->end && until != c);
+
+        // output the char
+        if (until != c || inclusive)
+            strbuf_putchar(sb, c);
+
+        // figure out the fpos of the char
+        p = ch->ss + occ(t, c, p);
+
+        // break the loop if it meets the char until
+        if (until == c) break;
+
+        // stop when the previous char is the final end
+        // (looping back to the end)
+    } while (p != t->end);
+
+    // note that it is ensured to output an fpos
     return p;
 }
 
-unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char until) {
+unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char until, int inclusive, strbuf * sb) {
     character * ch;
     unsigned char c;
     unsigned long occ, p = pos;
-    while (p != t->end) {
+    do {
+        // read next char in the first column
+        // or the given char at pos
         c = fpos_char(t, p);
-        putchar(c);
+
+        // output the char
+        if (c != until || inclusive)
+            strbuf_putchar(sb, c);
+        // break the loop if it meets the char until
         if (c == until) return p;
+
+        // map the fpos to lpos
+        // the next char is at lpos in the first column
+        // so p will still be an fpos - an fpos for the next char
         ch = t->char_hash[(unsigned int) c];
-        occ = p - ch->ss; // occ for the next char
+        occ = p - ch->ss;
         p = lpos(t, c, occ);
-    }
-    fseek(t->fp, 4 + t->end, SEEK_SET);
-    c = fgetc(t->fp);
-    putchar(c);
-    return t->end;
+
+        // no next char for the last position (t->end)
+    } while (p != t->end);
+
+    // TODO p==t->end ?
+    return p;
+
 }
 
-void search(bwttext * t, unsigned char * p, unsigned int l) {
+void _search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delimiter, int post_d) {
 
-    //    fpos_range * r = search_backward(t, p, l);
-    fpos_range * r = search_forward(t, p, l);
+    fpos_range * r = search_backward(t, p, l);
+    //fpos_range * r = search_forward(t, p, l);
     if (r != NULL) {
         unsigned long i, p;
-        pset * ps = pset_init();
+        plset * ps = plset_init();
 
         //printf("found between f-l=%lu-%lu\n", r->first, r->last);
 
         for (i = r->first; i <= r->last; i++) {
 
-            strbuf * sb = strbuf_init();
-            p = decode_backward_until(t, i, '\n', sb);
-            if (!pset_contains(ps, p)) {
-                pset_put(ps, p);
-                strbuf_dump(sb, stdout);
-                decode_forward_until(t, i, '\n');
+            strbuf * sb1 = strbuf_init();
+            p = decode_backward_until(t, i, delimiter, !post_d, sb1);
+            if (plset_contains(ps, p)) {
+                strbuf_free(sb1);
+            } else {
+                strbuf * sb2 = strbuf_init();
+                decode_forward_until(t, i, delimiter, post_d, sb2);
+
+                printf("~");
+                strbuf_dump_rev(sb1, stdout);
+                printf(":pos=%lu\n", p);
+
+                plset_put(ps, p, sb1, sb2);
             }
-            strbuf_free(sb);
 
         }
 
-        pset_free(ps);
+        plset_sort(ps);
+        plset_print(ps, stdout);
+
+        plset_free(ps);
     } else {
         fprintf(stderr, "no results found\n");
     }
     free(r);
 
+}
+
+void search(bwttext * t, unsigned char * p, unsigned int l) {
+    _search(t, p, l, '\n', 1);
+}
+
+void psearch(bwttext * t, unsigned char * p, unsigned int l) {
+    _search(t, p, l, '[', 0);
 }
 
