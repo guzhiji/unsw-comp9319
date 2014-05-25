@@ -45,54 +45,118 @@ unsigned char bwt_str_read(unsigned int pos) {
 
 }
 
-int bwt_cmp(const void * s1, const void * s2) {
+int bwt_cmp(unsigned int p1, unsigned int p2) {
     unsigned char c1, c2;
-    unsigned int p1, p2, i;
-    p1 = * (unsigned int *) s1;
-    p2 = * (unsigned int *) s2;
+    unsigned int i;
     for (i = 0; i < bwt_len; i++) {
         c1 = bwt_str_read(p1);
         c2 = bwt_str_read(p2);
+
         if (c1 > c2) return 1;
         if (c1 < c2) return -1;
         // if equal, compare next pair of chars
+
+        // if reaching the end, go back to the beginning
         if (++p1 == bwt_len) p1 = 0;
         if (++p2 == bwt_len) p2 = 0;
     }
     return 0;
 }
 
+int bwt_cmp_ss(const void * s1, const void * s2) {
+    return bwt_cmp(* (unsigned short *) s1, * (unsigned short *) s2);
+}
+
+int bwt_cmp_ii(const void * s1, const void * s2) {
+    return bwt_cmp(* (unsigned int *) s1, * (unsigned int *) s2);
+}
+
 unsigned int bwt(FILE * in, FILE * out, int output_last, int loadall) {
 
-    unsigned int * matrix;
-    unsigned int i, last = 0;
+    unsigned short * matrix_lower;
+    unsigned int * matrix_higher;
+    unsigned int i1, i2, l1, l2, p1, p2, threshold, last = 0;
+    int cmp;
     unsigned char c;
 
-    // global vars
+    threshold = 1 << 16 - 1;
+
     bwt_str_load(in, loadall);
-    matrix = malloc(sizeof(unsigned int) * bwt_len);
+
+    if (bwt_len > threshold) {
+        l1 = threshold;
+        l2 = bwt_len - threshold;
+    } else {
+        l1 = bwt_len;
+        l2 = 0;
+    }
+
+    matrix_lower = malloc(sizeof(unsigned short) * l1);
+    if (l2 > 0)
+        matrix_higher = malloc(sizeof(unsigned int) * l2);
+    else
+        matrix_higher = NULL;
 
     // rotate the string
-    for (i = 0; i < bwt_len; i++)
-        matrix[i] = i;
+    for (i1 = 0; i1 < l1; i1++)
+        matrix_lower[i1] = (unsigned short) i1;
+    if (l2 > 0)
+        for (i2 = 0; i2 < l2; i2++)
+            matrix_higher[i2] = threshold + i2;
 
     // sort
-    qsort(matrix, bwt_len, sizeof(unsigned int), bwt_cmp);
+    qsort(matrix_lower, l1, sizeof(unsigned short), bwt_cmp_ss);
+    if (l2 > 0)
+        qsort(matrix_higher, l2, sizeof(unsigned int), bwt_cmp_ii);
 
+    // skip the slot for the last position
     if (output_last)
         fseek(out, sizeof(unsigned int), SEEK_SET);
 
-    for (i = 0; i < bwt_len; i++) {
-        // read char in the last column into c
-        // as the output char at position i
-        if (matrix[i] == 0) {
+    // output
+    // TODO merge low and high
+    i1 = 0;
+    i2 = 0;
+    while (1) {
+
+        // compare c1 and c2 at lower[p1] and higher[p2]
+        // take a position from p1 and p2 and treat it as p1
+        if (i1 < l1)
+            p1 = matrix_lower[i1];
+        if (i2 < l2)
+            p2 = matrix_higher[i2];
+
+        if (i1 < l1 && i2 < l2) {
+            cmp = bwt_cmp(p1, p2);
+            if (cmp > 0) // c1 > c2
+                p1 = p2; // take a smaller c
+        } else if (i2 < l2)
+            p1 = p2;
+        else if (i1 >= l1)
+            break;
+
+        // output the corresponding char in the last column
+        if (p1 == 0) {
             // first column is exactly the first char of the input
             // so last column is the last char of the input
             c = bwt_str_read(bwt_len - 1);
-            last = i;
+            last = i1 + i2;
         } else
-            c = bwt_str_read(matrix[i] - 1);
+            c = bwt_str_read(p1 - 1);
+
         fputc((int) c, out);
+
+        // advance indices
+        if (i1 < l1 && i2 < l2) {
+            if (cmp > 0) // c1 > c2
+                i2++;
+            else // c1 <= c2
+                i1++;
+        } else if (i2 < l2)
+            i2++;
+        else
+            i1++;
+
     }
 
     if (output_last) {
@@ -100,7 +164,10 @@ unsigned int bwt(FILE * in, FILE * out, int output_last, int loadall) {
         fwrite(&last, sizeof(unsigned int), 1, out);
     }
 
-    free(matrix);
+    // release memory
+    free(matrix_lower);
+    if (matrix_higher != NULL)
+        free(matrix_higher);
     bwt_str_unload();
 
     return last;
