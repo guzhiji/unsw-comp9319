@@ -4,8 +4,8 @@
 
 typedef struct {
     unsigned long * arr;
-    unsigned int max;
-    unsigned int len;
+    unsigned long max;
+    unsigned long len;
 } bucket;
 
 FILE * bwt_in;
@@ -24,9 +24,9 @@ void bwt_str_load(FILE * in, int loadall) {
 
     bwt_len = bwt_str_len(in);
     if (loadall) {
-        bwt_text = (unsigned char *) malloc(sizeof(unsigned char) * bwt_len);
+        bwt_text = (unsigned char *) malloc(sizeof (unsigned char) * bwt_len);
         rewind(in);
-        fread(bwt_text, sizeof(unsigned char), bwt_len, in);
+        fread(bwt_text, sizeof (unsigned char), bwt_len, in);
     } else {
         bwt_in = in;
         bwt_text = NULL;
@@ -45,7 +45,7 @@ unsigned char bwt_str_read(unsigned long pos) {
     else {
         unsigned char c;
         fseek(bwt_in, pos, SEEK_SET);
-        fread(&c, sizeof(unsigned char), 1, bwt_in);
+        fread(&c, sizeof (unsigned char), 1, bwt_in);
         return c;
     }
 
@@ -54,10 +54,10 @@ unsigned char bwt_str_read(unsigned long pos) {
 //-------------------------------------------------
 
 bucket * bucket_init() {
-    bucket * b = (bucket *) malloc(sizeof(bucket));
+    bucket * b = (bucket *) malloc(sizeof (bucket));
     b->len = 0;
     b->max = 32;
-    b->arr = (unsigned long *) malloc(sizeof(unsigned long) * b->max);
+    b->arr = (unsigned long *) malloc(sizeof (unsigned long) * b->max);
     return b;
 }
 
@@ -66,7 +66,7 @@ void bucket_put(bucket * s, unsigned long n) {
     if (s->len == s->max) {
 
         unsigned long * nb;
-        nb = (unsigned long *) realloc(s->arr, sizeof(unsigned long) * (s->max + 32));
+        nb = (unsigned long *) realloc(s->arr, sizeof (unsigned long) * (s->max + 32));
 
         if (nb == NULL) return;
 
@@ -87,8 +87,8 @@ int _cmp_by_str(const void * s1, const void * s2) {
     unsigned char c1, c2;
     unsigned long p1, p2, i;
 
-    p1 = * (unsigned long *) s1;
-    p2 = * (unsigned long *) s2;
+    p1 = *(unsigned long *) s1;
+    p2 = *(unsigned long *) s2;
 
     for (i = 0; i < bwt_len; i++) {
         c1 = bwt_str_read(p1);
@@ -114,15 +114,15 @@ void bucket_sort(bucket * s) {
 unsigned long bwt(FILE * in, FILE * out, int output_last, int loadall) {
 
     bucket * bkts[256] = {NULL};
-    unsigned long p, last = 0;
-    int c, i, j;
+    unsigned long p, ci, last = 0;
+    int c, bi, bci;
 
     bwt_str_load(in, loadall);
 
     // rotate the string by getting the 
     // start position of each rotation
     // and the start positions are stored 
-    // separately in buckets
+    // alphabetically separately in buckets
     p = 0;
     while (p < bwt_len) {
         c = bwt_str_read(p);
@@ -133,29 +133,32 @@ unsigned long bwt(FILE * in, FILE * out, int output_last, int loadall) {
 
     // sort each bucket so that the whole 
     // string is sorted
-    for (i = 0; i < 256; i++)
-        if (bkts[i] != NULL)
-            bucket_sort(bkts[i]);
+    for (bi = 0; bi < 256; bi++)
+        if (bkts[bi] != NULL)
+            bucket_sort(bkts[bi]);
 
     // reserve a slot for storing position of the last char
     if (output_last)
-        fseek(out, sizeof(unsigned long), SEEK_SET);
+        fseek(out, sizeof (unsigned long), SEEK_SET);
 
-    for (i = 0; i < 256; i++) {
+    ci = 0;
+    for (bi = 0; bi < 256; bi++) {
         // read char in the last column into c
-        // as the output char at position [i][j]
-        bucket * b = bkts[i];
-        for (j = 0; j < b->len; j++) {
+        // as the output char at position ci
+        bucket * b = bkts[bi];
+        if (b == NULL) continue;
+        for (bci = 0; bci < b->len; bci++) {
 
-            p = b->arr[j];
+            p = b->arr[bci];
             if (p == 0) {
                 // first column is exactly the first char of the input
                 // so last column is the last char of the input
                 c = bwt_str_read(bwt_len - 1);
-                last = i;
+                last = ci;
             } else
                 c = bwt_str_read(p - 1);
 
+            ci++;
             fputc(c, out);
 
         }
@@ -164,14 +167,14 @@ unsigned long bwt(FILE * in, FILE * out, int output_last, int loadall) {
     // output position of the last char
     if (output_last) {
         rewind(out);
-        fwrite(&last, sizeof(unsigned int), 1, out);
+        fwrite(&last, sizeof (unsigned long), 1, out);
     }
 
     bwt_str_unload();
 
-    for (i = 0; i < 256; i++)
-        if (bkts[i] != NULL)
-            bucket_free(bkts[i]);
+    for (bi = 0; bi < 256; bi++)
+        if (bkts[bi] != NULL)
+            bucket_free(bkts[bi]);
 
     return last;
 
