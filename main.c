@@ -107,6 +107,9 @@ void dump_chartable(bwttext * t) {
 
 int main(int argc, char **argv) {
 
+    unsigned char special_char = '\n'; // TODO special char='['
+    int special_char_post = 1; // TODO 0, before word
+
     if (argc > 3) {
         // 0: program name
         // 1: bwt file
@@ -114,7 +117,7 @@ int main(int argc, char **argv) {
         // 3: ?
 
         char * opt_o = "-o";
-        bwttext * t = bwttext_init(argv[1], argv[2], ' ', 0); // TODO special char=' '
+        bwttext * t = bwttext_init(argv[1], argv[2], special_char, 0);
 
         if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
             // 3: "-o"
@@ -127,9 +130,8 @@ int main(int argc, char **argv) {
         } else {// searching
             // 3: query term
 
-            // TODO special char=' '
-            search(t, (unsigned char *) argv[3], strlen(argv[3]), '\n', 1); 
-            //search(t, (unsigned char *) argv[3], strlen(argv[3]), '[', 0); 
+            search(t, (unsigned char *) argv[3], strlen(argv[3]),
+                    special_char, special_char_post);
 
         }
 

@@ -373,21 +373,22 @@ void search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delimi
         for (i = r->first; i <= r->last; i++) {
 
             strbuf * sb1 = strbuf_init();
-            p = decode_backward_until(t, i, delimiter, !post_d, sb1);
-
-            printf("pos=%lu:\n", p);
-
+            // p = decode_backward_until(t, i, delimiter, !post_d, sb1);
+            p = decode_forward_until(t, i, delimiter, post_d, sb1);
             if (plset_contains(ps, p)) {
                 strbuf_free(sb1);
             } else {
                 strbuf * sb2 = strbuf_init();
-                decode_forward_until(t, i, delimiter, post_d, sb2);
+                // decode_forward_until(t, i, delimiter, post_d, sb2);
+                decode_backward_until(t, i, delimiter, !post_d, sb2);
 
                 printf("~");
-                strbuf_dump_rev(sb1, stdout);
+                //strbuf_dump_rev(sb1, stdout);
+                strbuf_dump(sb1, stdout);
                 printf(":pos=%lu\n", p);
 
-                plset_put(ps, p, sb1, sb2);
+                // plset_put(ps, p, sb1, sb2);
+                plset_put(ps, p, sb2, sb1);
             }
 
         }

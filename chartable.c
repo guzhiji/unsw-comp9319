@@ -151,14 +151,18 @@ void chartable_compute_ss(bwttext * t, unsigned char special_char) {
     int c;
     unsigned long sbefore, tsbefore;
     character * ch;
-chartable_dump(t);
+
+    //chartable_dump(t);
+
     // sort characters lexicographically
     if (process_special_char(t, special_char))
         // skip the first special char in sorting
         qsort(&t->char_table[1], t->char_num - 1, sizeof (character), _cmp_char_by_code);
     else
         qsort(t->char_table, t->char_num, sizeof (character), _cmp_char_by_code);
-chartable_dump(t);
+
+    //chartable_dump(t);
+
     // clear hash because sequence has been changed
     chartable_inithash(t);
 
@@ -182,7 +186,7 @@ void chartable_save(bwttext * t) {
 
     fwrite(t->char_table, sizeof (character), t->char_num, t->ifp);
 
-chartable_dump(t);
+    //chartable_dump(t);
 }
 
 void chartable_load(bwttext * t) {
@@ -193,7 +197,8 @@ void chartable_load(bwttext * t) {
 
     fread(t->char_table, sizeof (character), t->char_num, t->ifp);
 
-chartable_dump(t);
+    //chartable_dump(t);
+
     // hash chars
     chartable_inithash(t);
     ch = t->char_table;
@@ -202,6 +207,6 @@ chartable_dump(t);
         ch++;
     }
 
-chartable_dump(t);
+    //chartable_dump(t);
 }
 
