@@ -10,12 +10,6 @@
 #define OCCTABLE_MEMORY 1024 * 1024 * 5
 #define BUF_SIZE 1024 * 1024
 
-//-----------------------------
-//performance seems better, but index is too large
-//#define BWTBLOCK_PURE_MIN 10
-//#define BWTBLOCK_IMPURE_MAX 2048
-//#define BWTBLOCK_INDEX_SIZE 2024
-
 typedef struct {
     unsigned char c;
     unsigned long ss; //smaller_symbols

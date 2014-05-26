@@ -22,7 +22,7 @@ void dump_occ(bwttext * t, unsigned char c, char * outfile) {
 }
 
 void dump_occ_japan() {
-    bwttext * t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
+    bwttext * t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", ' ', 1);
     int i;
     char fn[50];
     /*
@@ -80,7 +80,7 @@ void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
 }
 
 void dump_lpos_japan() {
-    bwttext * t = bwttext_init("../tests/bwtsearch/5MB.bwt", "../5MB.idx", 1);
+    bwttext * t = bwttext_init("../tests/bwtsearch/5MB.bwt", "../5MB.idx", ' ', 1);
     //    int i;
 
     //        dump_lpos(t, (unsigned char) 32, stdout);
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
         // 3: ?
 
         char * opt_o = "-o";
-        bwttext * t = bwttext_init(argv[1], argv[2], 0);
+        bwttext * t = bwttext_init(argv[1], argv[2], ' ', 0); // TODO special char=' '
 
         if (argc > 4 && 0 == strcmp(argv[3], opt_o)) {// decoding
             // 3: "-o"
@@ -127,7 +127,9 @@ int main(int argc, char **argv) {
         } else {// searching
             // 3: query term
 
-            search(t, (unsigned char *) argv[3], strlen(argv[3]));
+            // TODO special char=' '
+            search(t, (unsigned char *) argv[3], strlen(argv[3]), '\n', 1); 
+            //search(t, (unsigned char *) argv[3], strlen(argv[3]), '[', 0); 
 
         }
 

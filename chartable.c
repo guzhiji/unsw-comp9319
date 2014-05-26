@@ -4,6 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void chartable_dump(bwttext * t) {
+    int i;
+    character * ch;
+
+    printf("==================\n");
+    printf("dump chartable:\n");
+
+    ch = t->char_table;
+    for (i = 0; i < t->char_num; i++) {
+        printf("%d: ss=%lu\n", ch->c, ch->ss);
+        ch++;
+    }
+
+    printf("==================\n");
+}
+
 void chartable_inithash(bwttext * t) {
     int i;
     for (i = 0; i < 256; i++)
@@ -109,19 +125,42 @@ void chartable_compute_charfreq(bwttext * t) {
 
 }
 
+int process_special_char(bwttext * t, unsigned char special_char) {
+    int i;
+    character tch;
+    if (t->char_num == 0 || special_char == 0) return 0;
+    if (t->char_table[0].c == special_char) return 1;
+    for (i = 1; i < t->char_num; i++) {
+        if (t->char_table[i].c == special_char) {
+            // swap with the first char
+            tch = t->char_table[0];
+            t->char_table[0] = t->char_table[i];
+            t->char_table[i] = tch;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /**
  * calculate smaller symbols (ss) using freq 
  * to generate data for the C[] table
  */
-void chartable_compute_ss(bwttext * t) {
+void chartable_compute_ss(bwttext * t, unsigned char special_char) {
 
     int c;
     unsigned long sbefore, tsbefore;
     character * ch;
-
+chartable_dump(t);
     // sort characters lexicographically
-    qsort(t->char_table, t->char_num, sizeof (character), _cmp_char_by_code);
-    chartable_inithash(t); // set all null
+    if (process_special_char(t, special_char))
+        // skip the first special char in sorting
+        qsort(&t->char_table[1], t->char_num - 1, sizeof (character), _cmp_char_by_code);
+    else
+        qsort(t->char_table, t->char_num, sizeof (character), _cmp_char_by_code);
+chartable_dump(t);
+    // clear hash because sequence has been changed
+    chartable_inithash(t);
 
     c = 0; // count for boudndary
     sbefore = 0;
@@ -135,7 +174,6 @@ void chartable_compute_ss(bwttext * t) {
         ch->ss = tsbefore; // smaller symbols
         ch++; // a larger char
     }
-
 }
 
 void chartable_save(bwttext * t) {
@@ -144,6 +182,7 @@ void chartable_save(bwttext * t) {
 
     fwrite(t->char_table, sizeof (character), t->char_num, t->ifp);
 
+chartable_dump(t);
 }
 
 void chartable_load(bwttext * t) {
@@ -154,6 +193,7 @@ void chartable_load(bwttext * t) {
 
     fread(t->char_table, sizeof (character), t->char_num, t->ifp);
 
+chartable_dump(t);
     // hash chars
     chartable_inithash(t);
     ch = t->char_table;
@@ -162,5 +202,6 @@ void chartable_load(bwttext * t) {
         ch++;
     }
 
+chartable_dump(t);
 }
 

@@ -360,7 +360,7 @@ unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char
 
 }
 
-void _search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delimiter, int post_d) {
+void search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delimiter, int post_d) {
 
     fpos_range * r = search_backward(t, p, l);
     //fpos_range * r = search_forward(t, p, l);
@@ -368,12 +368,15 @@ void _search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delim
         unsigned long i, p;
         plset * ps = plset_init();
 
-        //printf("found between f-l=%lu-%lu\n", r->first, r->last);
+        printf("found between f-l=%lu-%lu\n", r->first, r->last);
 
         for (i = r->first; i <= r->last; i++) {
 
             strbuf * sb1 = strbuf_init();
             p = decode_backward_until(t, i, delimiter, !post_d, sb1);
+
+            printf("pos=%lu:\n", p);
+
             if (plset_contains(ps, p)) {
                 strbuf_free(sb1);
             } else {
@@ -398,13 +401,5 @@ void _search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delim
     }
     free(r);
 
-}
-
-void search(bwttext * t, unsigned char * p, unsigned int l) {
-    _search(t, p, l, '\n', 1);
-}
-
-void psearch(bwttext * t, unsigned char * p, unsigned int l) {
-    _search(t, p, l, '[', 0);
 }
 

@@ -23,7 +23,7 @@
  * char table:
  * - character(ss, sorted by char), character * char_num
  */
-void bwttext_index_write(bwttext * t) {
+void bwttext_index_write(bwttext * t, unsigned char special_char) {
     unsigned char num;
 
     // INDEX INFO:
@@ -60,7 +60,7 @@ void bwttext_index_write(bwttext * t) {
 
     // CHAR TABLE:
 
-    chartable_compute_ss(t); //consumes freq
+    chartable_compute_ss(t, special_char); //consumes freq
     chartable_save(t); //requires ss
 
 }
@@ -91,7 +91,7 @@ void bwttext_index_load(bwttext * t) {
     chartable_load(t); //requires occ_infreq_pos, etc.
 }
 
-bwttext * bwttext_init(char * bwtfile, char * indexfile, int forceindex) {
+bwttext * bwttext_init(char * bwtfile, char * indexfile, unsigned char special_char, int forceindex) {
 
     bwttext * t = (bwttext *) malloc(sizeof (bwttext));
 
@@ -114,7 +114,7 @@ bwttext * bwttext_init(char * bwtfile, char * indexfile, int forceindex) {
             bwttext_free(t);
             exit(1);
         }
-        bwttext_index_write(t);
+        bwttext_index_write(t, special_char);
     }
 
     return t;
