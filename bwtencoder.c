@@ -1,17 +1,8 @@
 
+#include "bwtencoder.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-typedef struct {
-    unsigned long * arr;
-    unsigned long max;
-    unsigned long len;
-} bucket;
-
-FILE * bwt_in;
-unsigned long bwt_len;
-unsigned char * bwt_text;
-unsigned char bwt_special_char;
 
 unsigned long bwt_str_len(FILE * in) {
     unsigned long l = 0;
@@ -128,7 +119,7 @@ void bucket_sort(bucket * s) {
  * positional Burrows-Wheeler transform
  * special_char:
  * - 0:  non-positional
- * - >0: e.g. '[', ' ', whose original sequence is kept
+ * - >0: e.g. '[', '\n', whose original sequence is kept
  */
 unsigned long pbwt(FILE * in, FILE * out, unsigned char special_char, 
         int output_last, int loadall) {
@@ -218,26 +209,4 @@ unsigned long pbwt(FILE * in, FILE * out, unsigned char special_char,
 
 }
 
-int main(int argc, char ** argv) {
-    if (argc == 3) {
-
-        FILE * in, * out;
-
-        in = fopen(argv[1], "r");
-        if (in == NULL) return 1;
-        out = fopen(argv[2], "w");
-        if (out == NULL) {
-            fclose(in);
-            return 1;
-        }
-
-        //pbwt(in, out, '[', 1, 1);
-        pbwt(in, out, '\n', 1, 1);
-
-        fclose(out);
-        fclose(in);
-        return 0;
-    }
-    return 1;
-}
 
