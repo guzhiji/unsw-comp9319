@@ -11,6 +11,7 @@ typedef struct {
 FILE * bwt_in;
 unsigned long bwt_len;
 unsigned char * bwt_text;
+unsigned char bwt_special_char;
 
 unsigned long bwt_str_len(FILE * in) {
     unsigned long l = 0;
@@ -94,8 +95,20 @@ int _cmp_by_str(const void * s1, const void * s2) {
         c1 = bwt_str_read(p1);
         c2 = bwt_str_read(p2);
 
-        if (c1 > c2) return 1;
-        if (c1 < c2) return -1;
+        if (c1 != c2) {
+            // if not equal,
+            // lift special char to the top
+            if (c1 == bwt_special_char)
+                return -1;
+            if (c2 == bwt_special_char)
+                return 1;
+            // or just compare normally
+            if (c1 > c2) return 1;
+            if (c1 < c2) return -1;
+        } else if (c1 == bwt_special_char)
+            // equal but both are the special char,
+            // make sure original order is unchanged
+            return -1;
         // if equal, compare next pair of chars
 
         // reaching the end, go back to the beginning
@@ -117,13 +130,15 @@ void bucket_sort(bucket * s) {
  * - 0:  non-positional
  * - >0: e.g. '[', ' ', whose original sequence is kept
  */
-unsigned long pbwt(FILE * in, FILE * out, unsigned char special_char, int output_last, int loadall) {
+unsigned long pbwt(FILE * in, FILE * out, unsigned char special_char, 
+        int output_last, int loadall) {
 
     bucket * bkts[256] = {NULL};
     unsigned long p, ci, last = 0;
     int c, bi, bci;
 
     bwt_str_load(in, loadall);
+    bwt_special_char = special_char;
 
     // rotate the string by getting the 
     // start position of each rotation
