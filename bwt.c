@@ -217,7 +217,7 @@ int main(int argc, char ** argv) {
         }
 
         //pbwt(in, out, '[', 1, 1);
-        pbwt(in, out, ' ', 1, 1);
+        pbwt(in, out, '\n', 1, 1);
 
         fclose(out);
         fclose(in);
