@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <bwtencoder.h>
+#include "bwtencoder.h"
 
 int main(int argc, char ** argv) {
     if (argc == 3) {
