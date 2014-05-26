@@ -7,6 +7,7 @@
 #define STRBUF_LEN 64
 
 typedef struct _strbuf_node strbuf_node;
+
 struct _strbuf_node {
     unsigned char l; // length
     unsigned char c[STRBUF_LEN]; // char array
@@ -17,6 +18,7 @@ struct _strbuf_node {
 typedef struct {
     strbuf_node * head;
     strbuf_node * tail;
+    FILE * direct_out;
 } strbuf;
 
 strbuf * strbuf_init();

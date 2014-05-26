@@ -4,9 +4,10 @@
 #include <stdio.h>
 
 strbuf * strbuf_init() {
-    strbuf * buf = (strbuf *) malloc(sizeof(strbuf));
+    strbuf * buf = (strbuf *) malloc(sizeof (strbuf));
     buf->tail = NULL;
     buf->head = NULL;
+    buf->direct_out = NULL;
     return buf;
 }
 
@@ -24,16 +25,23 @@ void strbuf_free(strbuf * buf) {
 
 void strbuf_putchar(strbuf * buf, unsigned char c) {
 
-    if (buf->tail == NULL || buf->tail->l == STRBUF_LEN) {
-        strbuf_node * bn = (strbuf_node *) malloc(sizeof(strbuf_node));
+    if (buf->direct_out != NULL) {
+        // direct out is set: buffer is disabled
+        fputc(c, buf->direct_out);
+    } else if (buf->tail == NULL || buf->tail->l == STRBUF_LEN) {
+        // when there is no node or a node is full
+        // add to a new node
+        strbuf_node * bn = (strbuf_node *) malloc(sizeof (strbuf_node));
         bn->l = 1;
         bn->c[0] = c;
+        // link the node to others
         bn->n = NULL;
         bn->p = buf->tail;
         buf->tail = bn;
         if (bn->p != NULL) bn->p->n = bn;
         if (buf->head == NULL) buf->head = bn;
     } else {
+        // fill in the tail node
         buf->tail->c[buf->tail->l++] = c;
     }
 

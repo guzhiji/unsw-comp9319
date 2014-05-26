@@ -360,7 +360,45 @@ unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char
 
 }
 
-void search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delimiter, int post_d) {
+void decode_range(bwttext * t, unsigned long start_pos, unsigned long end_pos,
+        unsigned char delimiter, int post_content, FILE * fout) {
+    strbuf * sb1, * sb2;
+    unsigned long i;
+
+    if (t->char_num > 1) {
+        if (end_pos > t->char_table[1].ss)
+            end_pos = t->char_table[1].ss;
+        if (start_pos < 1)
+            start_pos = 1;
+    } else if (t->char_num == 1
+            && t->char_table[0].c != delimiter
+            && start_pos < 2 && end_pos > 0) {
+        start_pos = 1;
+        end_pos = 1;
+    } else return;
+
+    for (i = start_pos; i <= end_pos; i++) {
+        sb1 = strbuf_init();
+        sb2 = strbuf_init();
+
+        // decode_backward_until(t, i - 1, delimiter, !post_content, sb1);
+        // decode_forward_until(t, i - 1, delimiter, post_content, sb2);
+        // strbuf_dump_rev(sb1, fout);
+        // strbuf_dump(sb2, fout);
+
+        decode_backward_until(t, i - 1, delimiter, !post_content, sb1);
+        strbuf_dump_rev(sb1, fout);
+
+        sb2->direct_out = stdout;
+        decode_forward_until(t, i - 1, delimiter, post_content, sb2);
+
+        strbuf_free(sb1);
+        strbuf_free(sb2);
+    }
+}
+
+void search(bwttext * t, unsigned char * p, unsigned int l,
+        unsigned char delimiter, int post_content) {
 
     fpos_range * r = search_backward(t, p, l);
     //fpos_range * r = search_forward(t, p, l);
@@ -373,20 +411,14 @@ void search(bwttext * t, unsigned char * p, unsigned int l, unsigned char delimi
         for (i = r->first; i <= r->last; i++) {
 
             strbuf * sb1 = strbuf_init();
-            // p = decode_backward_until(t, i, delimiter, !post_d, sb1);
-            p = decode_forward_until(t, i, delimiter, post_d, sb1);
+            // p = decode_backward_until(t, i, delimiter, !post_content, sb1);
+            p = decode_forward_until(t, i, delimiter, post_content, sb1);
             if (plset_contains(ps, p)) {
                 strbuf_free(sb1);
             } else {
                 strbuf * sb2 = strbuf_init();
-                // decode_forward_until(t, i, delimiter, post_d, sb2);
-                decode_backward_until(t, i, delimiter, !post_d, sb2);
-
-                printf("~");
-                //strbuf_dump_rev(sb1, stdout);
-                strbuf_dump(sb1, stdout);
-                printf(":pos=%lu\n", p);
-
+                // decode_forward_until(t, i, delimiter, post_content, sb2);
+                decode_backward_until(t, i, delimiter, !post_content, sb2);
                 // plset_put(ps, p, sb1, sb2);
                 plset_put(ps, p, sb2, sb1);
             }

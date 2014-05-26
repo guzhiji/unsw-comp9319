@@ -92,23 +92,10 @@ void dump_lpos_japan() {
     bwttext_free(t);
 }
 
-void dump_chartable(bwttext * t) {
-    int i;
-    character * ch;
-    printf("==================\n");
-    printf("dump_chartable:\n");
-    for (i = 0; i < 256; i++) {
-        ch = t->char_hash[i];
-        if (ch == NULL) continue;
-        printf("%c (%d): ss=%lu\n", ch->c, ch->c, ch->ss);
-    }
-    printf("==================\n");
-}
-
 int main(int argc, char **argv) {
 
     unsigned char special_char = '\n'; // TODO special char='['
-    int special_char_post = 1; // TODO 0, before word
+    int special_char_post = 1; // TODO 0, before content
 
     if (argc > 3) {
         // 0: program name
@@ -126,12 +113,18 @@ int main(int argc, char **argv) {
             FILE * out = fopen(argv[4], "wb");
             decode_backward_rev(t, out);
             fclose(out);
-
-        } else {// searching
+        } else if (argc == 4) {// searching
             // 3: query term
 
             search(t, (unsigned char *) argv[3], strlen(argv[3]),
                     special_char, special_char_post);
+
+        } else if (argc == 5) {// decoding a range
+            // 3: starting record
+            // 4: ending record
+
+            decode_range(t, atol(argv[3]), atol(argv[4]),
+                    special_char, special_char_post, stdout);
 
         }
 
@@ -151,8 +144,6 @@ int main(int argc, char **argv) {
     //    //            t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
     //    //            t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
     //    //            t = bwttext_init("../tests/bwtsearch/gcc.bwt", "../gcc.idx", 1);
-    //
-    //    dump_chartable(t);
     //
     //    //            decode_backward(t, stdout);
     //
