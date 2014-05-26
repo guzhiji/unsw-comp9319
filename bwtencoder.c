@@ -14,6 +14,9 @@ unsigned long bwt_str_len(FILE * in) {
 
 void bwt_str_load(FILE * in, int loadall) {
 
+    //force to load into memory
+    loadall = 1;
+
     bwt_len = bwt_str_len(in);
     if (loadall) {
         bwt_text = (unsigned char *) malloc(sizeof (unsigned char) * bwt_len);
@@ -83,8 +86,10 @@ int _cmp_by_str(const void * s1, const void * s2) {
     p2 = *(unsigned long *) s2;
 
     for (i = 0; i < bwt_len; i++) {
-        c1 = bwt_str_read(p1);
-        c2 = bwt_str_read(p2);
+        //c1 = bwt_str_read(p1);
+        //c2 = bwt_str_read(p2);
+        c1 = bwt_text[p1];
+        c2 = bwt_text[p2];
 
         if (c1 != c2) {
             // if not equal,
@@ -137,7 +142,8 @@ unsigned long pbwt(FILE * in, FILE * out, unsigned char special_char,
     // alphabetically separately in buckets
     p = 0;
     while (p < bwt_len) {
-        c = bwt_str_read(p);
+        //c = bwt_str_read(p);
+        c = bwt_text[p];
         if (bkts[c] == NULL)
             bkts[c] = bucket_init();
         bucket_put(bkts[c], p++);
@@ -172,10 +178,12 @@ unsigned long pbwt(FILE * in, FILE * out, unsigned char special_char,
                 if (p == 0) {
                     // first column is exactly the first char of the input
                     // so last column is the last char of the input
-                    c = bwt_str_read(bwt_len - 1);
+                    //c = bwt_str_read(bwt_len - 1);
+                    c = bwt_text[bwt_len - 1];
                     last = ci;
                 } else
-                    c = bwt_str_read(p - 1);
+                    //c = bwt_str_read(p - 1);
+                    c = bwt_text[p - 1];
 
                 ci++;
                 fputc(c, out);
