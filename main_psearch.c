@@ -9,10 +9,8 @@
 
 int main(int argc, char **argv) {
 
-    //unsigned char special_char = '['; // delimiter
-    //int special_char_post = 0; // delimiter before content, not after
-    unsigned char special_char = '\n'; // delimiter
-    int special_char_post = 1; // delimiter before content, not after
+    unsigned char special_char = '['; // delimiter
+    int special_char_post = 0; // delimiter before content, not after
 
     if (argc > 2) {
         // 0: program name
