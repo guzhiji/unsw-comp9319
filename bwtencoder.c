@@ -104,7 +104,7 @@ int _cmp_by_str(const void * s1, const void * s2) {
         } else if (c1 == bwt_special_char)
             // equal but both are the special char,
             // make sure original order is unchanged
-            return -1;
+            return p1 < p2 ? -1 : 1;
         // if equal, compare next pair of chars
 
         // reaching the end, go back to the beginning
