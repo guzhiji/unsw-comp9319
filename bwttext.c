@@ -14,6 +14,7 @@ void bwttext_read(bwttext * t, unsigned char special_char) {
     for (ic = 0; ic < 256; ic++)
         t->char_hash[ic] = NULL;
     t->char_num = 0;
+    t->rl_size = 0;
 
     ss = 0;
     ch_repeats = 0;
@@ -29,9 +30,11 @@ void bwttext_read(bwttext * t, unsigned char special_char) {
         }
         if (t->rl_size < RL_MAXSIZE) {
             if (pch != ch || ch_repeats == USHRT_MAX) {
-                t->rl_c[t->rl_size] = ch->c;
-                t->rl_l[t->rl_size] = ch_repeats;
-                t->rl_size++;
+                if (pch != NULL) {
+                    t->rl_c[t->rl_size] = pch->c;
+                    t->rl_l[t->rl_size] = ch_repeats;
+                    t->rl_size++;
+                }
                 ch_repeats = 1;
                 pch = ch;
             } else {
