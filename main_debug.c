@@ -22,7 +22,7 @@ void dump_occ(bwttext * t, unsigned char c, char * outfile) {
 }
 
 void dump_occ_japan() {
-    bwttext * t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", ' ', 1);
+    bwttext * t = bwttext_init("../japan.bwt", "../japan.idx", '\n', 1);
     int i;
     char fn[50];
     /*
@@ -30,7 +30,7 @@ void dump_occ_japan() {
      */
 
     for (i = 0; i < 256; i++) {
-        sprintf(fn, "../occtest/japan.c.%d.out", i);
+        sprintf(fn, "../occtest/japan.1.%d.out", i);
         dump_occ(t, (unsigned char) i, fn);
     }
 
@@ -80,7 +80,7 @@ void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
 }
 
 void dump_lpos_japan() {
-    bwttext * t = bwttext_init("../tests/bwtsearch/5MB.bwt", "../5MB.idx", ' ', 1);
+    bwttext * t = bwttext_init("../5MB.bwt", "../5MB.idx", '\n', 1);
     //    int i;
 
     //        dump_lpos(t, (unsigned char) 32, stdout);
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
     //    bwttext_free(t);
     //    return 0;
     //--------------------------------------------------------------------------
-    //dump_occ_japan();
-    dump_lpos_japan();
+    dump_occ_japan();
+    //dump_lpos_japan();
     return 0;
 }
