@@ -25,13 +25,9 @@ fpos_range * search_backward(bwttext * t, unsigned char * p, unsigned int l);
 
 fpos_range * search_forward(bwttext * t, unsigned char * p, unsigned int l);
 
-unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ);
-
 void search(bwttext * t, unsigned char * p, unsigned int l,
         unsigned char delimiter, int post_content);
 // void search(bwttext * t, unsigned char * p, unsigned int l);
-
-unsigned long occ(bwttext * t, unsigned char c, unsigned long pos);
 
 void decode_backward(bwttext * t, FILE * fout);
 

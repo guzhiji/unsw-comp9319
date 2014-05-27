@@ -11,18 +11,17 @@
 
 unsigned long char_freq(bwttext * t, character * ch_o) {
     character * ch;
-    unsigned int i;
 
     if (ch_o == NULL) return 0; //non-existent char
 
-    //find next char alphabetically
-    for (i = (unsigned int) ch_o->c + 1; i < 256; i++) {
-        ch = t->char_hash[i];
-        if (ch == NULL) continue; //skip non-existent chars
+    if (&t->char_table[t->char_num - 1] == ch_o)
+        // last char
+        return t->file_size - ch_o->ss;
+    else {
+        ch = ch_o;
+        ch++; // next char in the table
         return ch->ss - ch_o->ss;
     }
-
-    return t->file_size - ch_o->ss; //ch_o is the largest
 }
 
 fpos_range * search_forward(bwttext * t, unsigned char * p, unsigned int l) {
@@ -110,15 +109,14 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
     int i;
     unsigned char p = 0;
     character * c;
-    for (i = 0; i < 256; i++) {
-        c = t->char_hash[i];
-        if (c == NULL) continue;
+    c = t->char_table;
+    for (i = 0; i < t->char_num; i++) {
         if (c->ss > fpos) break;
         p = c->c;
+        c++;
     }
     return p;
 }
-
 
 /**
  * not in-use: backward decoding reverses data;
@@ -274,67 +272,106 @@ unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char
 
 void decode_range(bwttext * t, unsigned long start_pos, unsigned long end_pos,
         unsigned char delimiter, int post_content, FILE * fout) {
-    strbuf * sb1, * sb2;
-    unsigned long i;
+    strbuf * sb;
+    unsigned long i, l;
 
+    // boundary check
     if (t->char_num > 1) {
-        if (end_pos > t->char_table[1].ss)
-            end_pos = t->char_table[1].ss;
-        if (start_pos < 1)
-            start_pos = 1;
+
+        // position of the last record
+        l = t->char_table[1].ss;
+        // adjust end of the query
+        if (end_pos > l) end_pos = l;
+        // adjust beginning of the query
+        if (start_pos < 1) start_pos = 1;
+
     } else if (t->char_num == 1
             && t->char_table[0].c != delimiter
             && start_pos < 2 && end_pos > 0) {
+
+        // extreme case: only one char without delimiter
+        l = 1;
         start_pos = 1;
         end_pos = 1;
+
     } else return;
 
     for (i = start_pos; i <= end_pos; i++) {
-        sb1 = strbuf_init();
-        sb2 = strbuf_init();
+        sb = strbuf_init();
 
-        // decode_backward_until(t, i - 1, delimiter, !post_content, sb1);
-        // decode_forward_until(t, i - 1, delimiter, post_content, sb2);
-        // strbuf_dump_rev(sb1, fout);
-        // strbuf_dump(sb2, fout);
+        if (post_content) {
+            // - delimiter follows content, e.g. xx\n
+            //   only include the delimiter that comes after the content
+            decode_backward_until(t, i - 1, delimiter, 0, sb);
+            strbuf_dump_rev(sb, fout);
+            sb->direct_out = fout;
+            decode_forward_until(t, i - 1, delimiter, 1, sb);
 
-        decode_backward_until(t, i - 1, delimiter, !post_content, sb1);
-        strbuf_dump_rev(sb1, fout);
+        } else {
+            // - delimiter is followed by content, e.g. [xx
+            //   without outputing the delimiter after the content
+            if (i == l)
+                // before the first (0) is the last
+                decode_backward_until(t, 0, delimiter, 1, sb);
+            else
+                // before the next (i) is the current (i-1)
+                decode_backward_until(t, i, delimiter, 1, sb);
+            strbuf_dump_rev(sb, fout);
 
-        sb2->direct_out = stdout;
-        decode_forward_until(t, i - 1, delimiter, post_content, sb2);
+        }
 
-        strbuf_free(sb1);
-        strbuf_free(sb2);
+        strbuf_free(sb);
     }
 }
 
 void search(bwttext * t, unsigned char * p, unsigned int l,
         unsigned char delimiter, int post_content) {
 
+    // searching forward or backward here doesn't matter
     fpos_range * r = search_backward(t, p, l);
     //fpos_range * r = search_forward(t, p, l);
     if (r != NULL) {
         unsigned long i, p;
         plset * ps = plset_init();
 
-        printf("found between f-l=%lu-%lu\n", r->first, r->last);
+        //printf("found between f-l=%lu-%lu\n", r->first, r->last);
 
         for (i = r->first; i <= r->last; i++) {
 
             strbuf * sb1 = strbuf_init();
-            // p = decode_backward_until(t, i, delimiter, !post_content, sb1);
             p = decode_forward_until(t, i, delimiter, post_content, sb1);
+            if (!post_content) {
+                // e.g. [xxx [yyy
+                // could decode backward to get the ['s fpos
+                // however, ['s order in the first column is different 
+                // from the ones in the last column
+                // in positional BWT, the special char in the first 
+                // column is manually ordered
+                // therefore, ['s occ in BWT != its occ in the first column
+                // the solution here is instead to find [ in xxx[ first,
+                // then get position of the previous one
+                if (p == 0)
+                    p = t->char_table[1].ss - 1; // fpos of last [
+                else
+                    p--; // fpos of the previous [
+
+                // otherwise,
+                // e.g. xxx\n yyy\n
+                // decode forward to get the \n's fpos
+                // it's normal
+            }
             if (plset_contains(ps, p)) {
                 strbuf_free(sb1);
             } else {
                 strbuf * sb2 = strbuf_init();
-                // decode_forward_until(t, i, delimiter, post_content, sb2);
                 decode_backward_until(t, i, delimiter, !post_content, sb2);
-                // plset_put(ps, p, sb1, sb2);
                 plset_put(ps, p, sb2, sb1);
+                /*
+                strbuf_dump_rev(sb2, stdout);
+                strbuf_dump(sb1, stdout);
+                printf(" [pos=%lu]\n", p);
+                */
             }
-
         }
 
         plset_sort(ps);
