@@ -7,6 +7,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+void chartable_dump(bwttext * t) {
+    int i;
+    character * ch;
+
+    printf("==================\n");
+    printf("dump chartable:\n");
+
+    ch = t->char_table;
+    for (i = 0; i < t->char_num; i++) {
+        printf("%d: ss=%lu\n", ch->c, ch->ss);
+        ch++;
+    }
+
+    printf("==================\n");
+}
+
 void dump_occ(bwttext * t, unsigned char c, char * outfile) {
     FILE * ttt = fopen(outfile, "w");
     int ttc;
@@ -97,8 +113,8 @@ void dump_lpos_japan() {
 int main(int argc, char **argv) {
 
     //--------------------------------------------------------------------------
-    //    bwttext * t;
-    //    t = bwttext_init("../tests/bwtsearch/tiny.bwt", "../tiny.idx", 1);
+    bwttext * t;
+    t = bwttext_init("../tiny.pwt", '\n');
     //    //            t = bwttext_init("../tests/bwtsearch/japan.bwt", "../japan.idx", 1);
     //    //            t = bwttext_init("../tests/bwtsearch/sherlock.bwt", "../sherlock.idx", 1);
     //    //            t = bwttext_init("../tests/bwtsearch/pride.bwt", "../pride.idx", 1);
@@ -106,11 +122,13 @@ int main(int argc, char **argv) {
     //
     //    //            decode_backward(t, stdout);
     //
-    //    bwttext_free(t);
+    chartable_dump(t);
+    bwttext_free(t);
     //    return 0;
     //--------------------------------------------------------------------------
-    dump_occ_japan();
+    //dump_occ_japan();
     //dump_lpos_japan();
+
     return 0;
 }
 

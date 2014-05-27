@@ -6,13 +6,14 @@
 #include <limits.h>
 
 void bwttext_read(bwttext * t, unsigned char special_char) {
+    character chars[256];
     character * ch, * pch;
     unsigned short ch_repeats;
     unsigned long ss, tss;
-    int ic;
+    int ic, i;
 
-    for (ic = 0; ic < 256; ic++)
-        t->char_hash[ic] = NULL;
+    for (i = 0; i < 256; i++)
+        t->char_hash[i] = NULL;
     t->char_num = 0;
     t->rl_size = 0;
 
@@ -22,7 +23,7 @@ void bwttext_read(bwttext * t, unsigned char special_char) {
     while ((ic = fgetc(t->fp)) != EOF) {
         ch = t->char_hash[ic];
         if (ch == NULL) {
-            ch = t->char_hash[ic] = &t->char_table[t->char_num++];
+            ch = t->char_hash[ic] = &chars[t->char_num++];//&t->char_table[t->char_num++];
             ch->c = (unsigned char) ic;
             ch->ss = 1; // freq
         } else {
@@ -50,19 +51,32 @@ void bwttext_read(bwttext * t, unsigned char special_char) {
     }
     t->file_size = ss;
 
+    // 1. freq => smaller symbols
+    // 2. sort chars by code with the special 
+    //    char at the first
+    ic = 0;
     ss = 0;
     ch = t->char_hash[special_char];
     if (ch != NULL) {
         ss = ch->ss;
         ch->ss = 0;
+        t->char_table[ic++] = *ch;
     }
-    for (ic = 0; ic < 256; ic++) {
-        ch = t->char_hash[ic];
-        if (ic == special_char) continue;
+    for (i = 0; i < 256; i++) {
+        ch = t->char_hash[i];
+        if (i == special_char) continue;
         if (ch == NULL) continue;
         tss = ch->ss;
         ch->ss = ss;
         ss += tss;
+        t->char_table[ic++] = *ch;
+    }
+
+    // re-hash
+    ch = t->char_table;
+    for (i = 0; i < t->char_num; i++) {
+        t->char_hash[ch->c] = ch;
+        ch++;
     }
 
 }
