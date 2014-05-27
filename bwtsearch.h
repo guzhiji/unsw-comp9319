@@ -6,7 +6,9 @@
 #ifndef _BWTSEARCH_H_
 #define _BWTSEARCH_H_
 
-#include "common.h"
+#include "bwttext.h"
+
+#define BUF_SIZE 1024
 
 typedef struct {
     unsigned long first;
