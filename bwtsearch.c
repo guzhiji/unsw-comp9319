@@ -110,11 +110,11 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
     int i;
     unsigned char p = 0;
     character * c;
-    for (i = 0; i < 256; i++) {
-        c = t->char_hash[i];
-        if (c == NULL) continue;
+    c = t->char_table;
+    for (i = 0; i < t->char_num; i++) {
         if (c->ss > fpos) break;
         p = c->c;
+        c++;
     }
     return p;
 }
