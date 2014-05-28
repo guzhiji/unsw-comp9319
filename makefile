@@ -5,13 +5,14 @@ BWTSEARCH_FILES=${BASE_FILES} main_bwtsearch.c
 BENCODE_FILES=${BASE_ENCODER_FILES} main_bencode.c
 PSEARCH_FILES=${BASE_FILES} main_psearch.c
 PENCODE_FILES=${BASE_ENCODER_FILES} main_pencode.c
+PENCODE_NL_FILES=${BASE_ENCODER_FILES} main_pencode_nl.c
 DEBUG_FILES=${BASE_FILES} main_debug.c
 
 all:
 	gcc -o psearch *.h *.c
 
 clean:
-	rm psearch bwtsearch pencode bencode bwt_debug
+	rm psearch bwtsearch pencode pencode_nl bencode bwt_debug
 
 bwtsearch: ${BWTSEARCH_FILES}
 	gcc -o bwtsearch ${BWTSEARCH_FILES}
@@ -24,6 +25,9 @@ psearch: ${PSEARCH_FILES}
 
 pencode: ${PENCODE_FILES}
 	gcc -o pencode ${PENCODE_FILES}
+
+pencode_nl: ${PENCODE_NL_FILES}
+	gcc -o pencode_nl ${PENCODE_NL_FILES}
 
 debug: ${DEBUG_FILES}
 	gcc -o bwt_debug ${DEBUG_FILES}
