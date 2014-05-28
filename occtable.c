@@ -157,7 +157,7 @@ void occtable_generate(bwttext * t) {
 
 }
 
-unsigned long _occ(bwttext * t, unsigned char c, unsigned long pos) {
+unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
 
     character * ch;
     int ic;
@@ -205,12 +205,6 @@ unsigned long _occ(bwttext * t, unsigned char c, unsigned long pos) {
 
 }
 
-unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
-    unsigned long o = _occ(t,c,pos);
-    //printf("c=%d pos=%lu occ=%lu\n", c, pos, o);
-    return o;
-}
-
 /**
  * find the first position as the given occurance occ of c 
  * in BWT text (pos - position),
@@ -229,7 +223,6 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
     // locate block based on occ value
     // get initial status of position p and occ n
     bwtblock_offset_lookup(t, ch, occ, &p, &n);
-    printf("lpos: block start: %lu, occ from %lu\n", p, n);
 
     // count occ until the given occ
     // (the position should be found within the block)

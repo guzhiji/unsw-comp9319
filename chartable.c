@@ -56,6 +56,8 @@ unsigned long compute_mem_maxchars(bwttext * t) {
 
     //block number = snapshot number + 1
     t->block_num = allowed / snapshot + 1;
+    if (t->block_num > t->file_size / 2)
+        t->block_num = t->file_size / 2;
     //interval between snapshots
     t->block_width = t->file_size / t->block_num;
     if (t->file_size % t->block_num > 0) t->block_width++;
