@@ -18,7 +18,7 @@ typedef struct {
 } character;
 
 typedef struct {
-    unsigned long end; //position of the last char
+    //unsigned long end; //position of the last char
 
     unsigned long file_size;
     unsigned long block_num;

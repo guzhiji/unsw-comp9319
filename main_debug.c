@@ -12,7 +12,8 @@ void dump_occ(bwttext * t, unsigned char c, char * outfile) {
     int ttc;
     unsigned long pos = 0;
     fpos_t fpos;
-    fseek(t->fp, 4, SEEK_SET);
+    //fseek(t->fp, 4, SEEK_SET);
+    rewind(t->fp);
     while ((ttc = fgetc(t->fp)) != EOF) {
         fgetpos(t->fp, &fpos);
         fprintf(ttt, "%lu %lu\n", pos, occ(t, c, pos));
@@ -44,7 +45,8 @@ unsigned long lpos2(bwttext * t, unsigned char c, unsigned long occ) {
     unsigned long n = 0, p = 0;
     unsigned char cblk[1024];
 
-    fseek(t->fp, 4, SEEK_SET);
+    //fseek(t->fp, 4, SEEK_SET);
+    rewind(t->fp);
 
     do {
         r = fread(&cblk, sizeof (unsigned char), 1024, t->fp);
@@ -61,7 +63,8 @@ void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
     int ic;
     unsigned long occ = 0, pos = 0, lp1, lp2;
     fpos_t fpos;
-    fseek(t->fp, 4, SEEK_SET);
+    //fseek(t->fp, 4, SEEK_SET);
+    rewind(t->fp);
     fprintf(fout, "\n%d:\n", c);
     //    fprintf(fout, "%s\t%s\t%s\t%s\n", "occ", "pos", "lpos()", "lpos2()");
     fprintf(fout, "%s\t%s\t%s\n", "occ", "pos", "lpos()");

@@ -122,6 +122,7 @@ unsigned char fpos_char(bwttext * t, unsigned long fpos) {
  * not in-use: backward decoding reverses data;
  * but essentially this is the algorithm
  */
+/*
 void decode_backward(bwttext * t, FILE * fout) {
     unsigned char c;
     character * ch;
@@ -201,6 +202,7 @@ void decode_backward_rev(bwttext * t, FILE * fout) {
         fwrite(&buf[bufcur + 1], sizeof (unsigned char), BUF_SIZE - 1 - bufcur, fout);
 
 }
+*/
 
 /**
  * pos is a fpos
@@ -209,10 +211,13 @@ unsigned long decode_backward_until(bwttext * t, unsigned long pos, unsigned cha
     character * ch;
     unsigned char c;
     unsigned long p = pos;
-    do {
+
+    while (1) {
+    //do {
 
         // p is a fpos; it gets its previous char in the the last column
-        fseek(t->fp, p + 4, SEEK_SET);
+        //fseek(t->fp, p + 4, SEEK_SET);
+        fseek(t->fp, p, SEEK_SET);
         fread(&c, sizeof (unsigned char), 1, t->fp);
 
         // the char should exist
@@ -234,7 +239,8 @@ unsigned long decode_backward_until(bwttext * t, unsigned long pos, unsigned cha
 
         // stop when the previous char is the final end
         // (looping back to the end)
-    } while (p != t->end);
+    //} while (p != t->end);
+    }
 
     // note that it is ensured to output an fpos
     return p;
@@ -244,7 +250,8 @@ unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char
     character * ch;
     unsigned char c;
     unsigned long occ, p = pos;
-    do {
+    while (1) {
+    //do {
         // read next char in the first column
         // or the given char at pos
         c = fpos_char(t, p);
@@ -263,7 +270,8 @@ unsigned long decode_forward_until(bwttext * t, unsigned long pos, unsigned char
         p = lpos(t, c, occ);
 
         // no next char for the last position (t->end)
-    } while (p != t->end);
+    //} while (p != t->end);
+    }
 
     // TODO p==t->end ?
     return p;

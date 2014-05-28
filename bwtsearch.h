@@ -27,9 +27,9 @@ void search(bwttext * t, unsigned char * p, unsigned int l,
         unsigned char delimiter, int post_content);
 // void search(bwttext * t, unsigned char * p, unsigned int l);
 
-void decode_backward(bwttext * t, FILE * fout);
+//void decode_backward(bwttext * t, FILE * fout);
 
-void decode_backward_rev(bwttext * t, FILE * fout);
+//void decode_backward_rev(bwttext * t, FILE * fout);
 
 void decode_range(bwttext * t, unsigned long start_pos, unsigned long end_pos,
         unsigned char delimiter, int post_content, FILE * fout);

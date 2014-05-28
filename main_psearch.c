@@ -16,17 +16,9 @@ int main(int argc, char **argv) {
         // 1: bwt file
         // 2: ?
 
-        char * opt_o = "-o";
         bwttext * t = bwttext_init(argv[1], special_char);
 
-        if (argc > 3 && 0 == strcmp(argv[2], opt_o)) {// decoding
-            // 2: "-o"
-            // 3: unbwt file
-
-            FILE * out = fopen(argv[3], "wb");
-            decode_backward_rev(t, out);
-            fclose(out);
-        } else if (argc == 3) {// searching
+        if (argc == 3) {// searching
             // 2: query term
 
             search(t, (unsigned char *) argv[2], strlen(argv[2]),

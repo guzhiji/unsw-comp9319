@@ -80,7 +80,8 @@ void chartable_compute_charfreq(bwttext * t) {
     // count char freq
 
     cc = 0;
-    fseek(t->fp, 4, SEEK_SET);
+    //fseek(t->fp, 4, SEEK_SET);
+    rewind(t->fp);
     while ((c = fgetc(t->fp)) != EOF) {
         ch = t->char_hash[c];
         if (ch == NULL) {

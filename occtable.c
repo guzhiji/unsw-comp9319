@@ -120,7 +120,8 @@ void occtable_generate(bwttext * t) {
     n = 0; // number of chars in the current block
     blocks = 1; // block count
 
-    fseek(t->fp, 4, SEEK_SET);
+    //fseek(t->fp, 4, SEEK_SET);
+    rewind(t->fp);
     while ((ic = fgetc(t->fp)) != EOF) {
 
         ch = t->char_hash[ic];
@@ -185,7 +186,8 @@ unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
 
     //if (c_pos == pos) return o;
 
-    fseek(t->fp, 4 + c_pos, SEEK_SET);
+    //fseek(t->fp, 4 + c_pos, SEEK_SET);
+    fseek(t->fp, c_pos, SEEK_SET);
     {
         unsigned char buf[1024];
         int r;
@@ -226,7 +228,8 @@ unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
 
     // count occ until the given occ
     // (the position should be found within the block)
-    fseek(t->fp, 4 + p, SEEK_SET);
+    //fseek(t->fp, 4 + p, SEEK_SET);
+    fseek(t->fp, p, SEEK_SET);
     {
         unsigned char cblk[1024];
         int r, i;
