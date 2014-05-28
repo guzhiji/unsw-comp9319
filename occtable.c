@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void occtable_init(bwttext * t, int load) {
+void occtable_init(bwttext * t) {
 
     unsigned long n;
 
@@ -14,18 +14,10 @@ void occtable_init(bwttext * t, int load) {
         n = t->char_freq_num * (t->block_num - 1);
         t->occ_freq = (unsigned long *) malloc(sizeof (unsigned long) * n);
 
-        if (load) {
-            // currently not necessary as it is called after ftell()
-            // fseek(t->ifp, t->occ_freq_pos, SEEK_SET);
-            fread(t->occ_freq, sizeof (unsigned long), n, t->ifp);
-        }
-
     } else {
         n = 0;
         t->occ_freq = NULL;
     }
-
-    t->occ_infreq_pos = t->occ_freq_pos + n * sizeof (unsigned long);
 
 }
 
@@ -103,35 +95,8 @@ void bwtblock_offset_lookup(bwttext * t, character * ch, unsigned long occ, unsi
             *occ_start = t->occ_freq[offset + blk - 1]; // char start + snapshot index
 
     } else {
-        unsigned long buf[1024];
-        unsigned int bl, rl, i; //buf len, remaining len
-        // same logic
-
-        fseek(t->ifp, t->occ_infreq_pos + offset * sizeof (unsigned long), SEEK_SET);
-
-        // _blkoffset_lookup() by buf
+        fprintf(stderr, "bwtblock_offset_lookup(): infreq detected\n");
         blk = 0;
-        rl = l;
-        do {
-
-            if (rl > 1024)
-                rl -= bl = 1024;
-            else
-                rl -= bl = rl;
-
-            fread(buf, sizeof (unsigned long), bl, t->ifp);
-            blk += i = _blkoffset_lookup(buf, bl, occ);
-            if (i < bl) // before the last snapshot within the current buf
-                break;
-
-        } while (rl > 0);
-
-        if (blk > 0) {
-
-            fseek(t->ifp, t->occ_infreq_pos + (offset + blk - 1) * sizeof (unsigned long), SEEK_SET);
-            fread(occ_start, sizeof (unsigned long), 1, t->ifp);
-
-        }
 
     }
 
@@ -173,11 +138,9 @@ void occtable_generate(bwttext * t) {
                 offset = occtable_offset(t, tch, pos);
                 if (tch->isfreq) {
                     t->occ_freq[offset] = tch->ss;
-                    fseek(t->ifp, t->occ_freq_pos + offset * sizeof (unsigned long), SEEK_SET);
                 } else {
-                    fseek(t->ifp, t->occ_infreq_pos + offset * sizeof (unsigned long), SEEK_SET);
+                    fprintf(stderr, "occtable_generate(): infreq detected\n");
                 }
-                fwrite(&tch->ss, sizeof (unsigned long), 1, t->ifp);
             }
         } else if (n == t->block_width) {
             // a block of block_width is read
@@ -193,3 +156,100 @@ void occtable_generate(bwttext * t) {
     // char frequencies recovered
 
 }
+
+unsigned long _occ(bwttext * t, unsigned char c, unsigned long pos) {
+
+    character * ch;
+    int ic;
+    unsigned long o, o_offset, c_pos;
+
+    ch = t->char_hash[c];
+    if (ch == NULL)
+        return 0;
+
+    if (pos < t->block_width) {
+        // before the first snapshot
+        o = 0;
+        c_pos = bwtblock_offset(t, pos);
+    } else {
+        o_offset = occtable_offset(t, ch, pos);
+        if (ch->isfreq) {
+            o = t->occ_freq[o_offset];
+            c_pos = bwtblock_offset(t, pos);
+        } else {
+            fprintf(stderr, "occ(): infreq detected\n");
+            o = 0;
+            c_pos = 0;
+        }
+    }
+
+    //if (c_pos == pos) return o;
+
+    fseek(t->fp, 4 + c_pos, SEEK_SET);
+    {
+        unsigned char buf[1024];
+        int r;
+        do {
+            r = fread(buf, sizeof (unsigned char), 1024, t->fp);
+            for (ic = 0; ic < r; ic++) {
+                if (pos == c_pos++) return o;
+                if (buf[ic] == c) o++;
+            }
+        } while (r > 0);
+    }
+    //    while ((ic = fgetc(t->fp)) != EOF) {
+    //        if (pos == c_pos++) return o;
+    //        if (ic == c) o++;
+    //    }
+    return o;
+
+}
+
+unsigned long occ(bwttext * t, unsigned char c, unsigned long pos) {
+    unsigned long o = _occ(t,c,pos);
+    //printf("c=%d pos=%lu occ=%lu\n", c, pos, o);
+    return o;
+}
+
+/**
+ * find the first position as the given occurance occ of c 
+ * in BWT text (pos - position),
+ * the last column in the rotation matrix of the 
+ * original text (l - last column).
+ */
+unsigned long lpos(bwttext * t, unsigned char c, unsigned long occ) {
+    character * ch;
+    unsigned long n, p; // number of occ, char position
+
+    ch = t->char_hash[c];
+    if (ch == NULL) {
+        exit(1);
+    }
+
+    // locate block based on occ value
+    // get initial status of position p and occ n
+    bwtblock_offset_lookup(t, ch, occ, &p, &n);
+    printf("lpos: block start: %lu, occ from %lu\n", p, n);
+
+    // count occ until the given occ
+    // (the position should be found within the block)
+    fseek(t->fp, 4 + p, SEEK_SET);
+    {
+        unsigned char cblk[1024];
+        int r, i;
+
+        do {
+            r = fread(cblk, sizeof (unsigned char), 1024, t->fp);
+            for (i = 0; i < r; i++) {
+                // when c occurs, n is compared against occ before it counts;
+                if (cblk[i] == c && n++ == occ)
+                    return p; // p is returned before it counts the current position
+                p++;
+            }
+        } while (r > 0);
+
+    }
+    return p;
+
+}
+

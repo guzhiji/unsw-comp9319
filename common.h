@@ -25,7 +25,7 @@ typedef struct {
     unsigned long block_width;
 
     unsigned long * occ_freq;
-    unsigned long occ_infreq_pos;
+    //unsigned long occ_infreq_pos;
     unsigned long occ_freq_pos;
 
     unsigned short char_freq_num;
@@ -34,7 +34,7 @@ typedef struct {
     character * char_hash[256];
 
     FILE * fp; //file pointer to the bwt file
-    FILE * ifp; //file pointer to the index file
+    //FILE * ifp; //file pointer to the index file
 } bwttext;
 
 #endif

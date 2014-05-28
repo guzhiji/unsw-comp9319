@@ -26,16 +26,6 @@ void chartable_inithash(bwttext * t) {
         t->char_hash[i] = NULL;
 }
 
-void chartable_init(bwttext * t) {
-
-    //t->char_table_pos = 
-    unsigned long p = t->occ_infreq_pos + (t->char_num - t->char_freq_num) * (t->block_num - 1) * sizeof (unsigned long);
-
-    //fseek(t->ifp, t->char_table_pos, SEEK_SET);
-    fseek(t->ifp, p, SEEK_SET);
-
-}
-
 int _cmp_char_by_code(const void * c1, const void * c2) {
     // ascending order
     return (int) ((character *) c1)->c - ((character *) c2)->c;
@@ -56,10 +46,12 @@ int _cmp_char_by_freq(const void * c1, const void * c2) {
  */
 unsigned long compute_mem_maxchars(bwttext * t) {
 
-    unsigned long allowed, misc, snapshot;
+    //unsigned long allowed, misc, snapshot;
+    unsigned long allowed, snapshot;
 
-    misc = 15;
-    allowed = t->file_size / 2 + 2048 - t->char_num * sizeof (character) - misc;
+    //misc = 15;
+    //allowed = t->file_size / 2 + 2048 - t->char_num * sizeof (character) - misc;
+    allowed = OCCTABLE_MEMORY;
     snapshot = sizeof (long) * t->char_num; //size for each occ snapshot
 
     //block number = snapshot number + 1
@@ -69,7 +61,7 @@ unsigned long compute_mem_maxchars(bwttext * t) {
     if (t->file_size % t->block_num > 0) t->block_width++;
 
     //memory available for each snapshot / size of one occ value
-    return OCCTABLE_MEMORY / t->block_num / sizeof (unsigned long);
+    return OCCTABLE_MEMORY / (t->block_num-1) / sizeof (unsigned long);
 
 }
 
@@ -105,6 +97,9 @@ void chartable_compute_charfreq(bwttext * t) {
     //max chars in memory as freq threshold
 
     max = compute_mem_maxchars(t);
+    if (max < t->char_num)
+        printf("memory isn't sufficient to store everything, max char %lu, char num %d\n",
+                max,t->char_num);
     t->char_freq_num = max > t->char_num ? t->char_num : (unsigned short) max;
 
     //take the most freq ones
@@ -180,33 +175,5 @@ void chartable_compute_ss(bwttext * t, unsigned char special_char) {
     }
 }
 
-void chartable_save(bwttext * t) {
 
-    chartable_init(t);
-
-    fwrite(t->char_table, sizeof (character), t->char_num, t->ifp);
-
-    //chartable_dump(t);
-}
-
-void chartable_load(bwttext * t) {
-    character * ch;
-    int i;
-
-    chartable_init(t);
-
-    fread(t->char_table, sizeof (character), t->char_num, t->ifp);
-
-    //chartable_dump(t);
-
-    // hash chars
-    chartable_inithash(t);
-    ch = t->char_table;
-    for (i = 0; i < t->char_num; i++) {
-        t->char_hash[ch->c] = ch;
-        ch++;
-    }
-
-    //chartable_dump(t);
-}
 

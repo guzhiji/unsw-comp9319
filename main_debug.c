@@ -1,6 +1,7 @@
 
 #include "bwttext.h"
 #include "bwtsearch.h"
+#include "occtable.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,7 +23,7 @@ void dump_occ(bwttext * t, unsigned char c, char * outfile) {
 }
 
 void dump_occ_japan() {
-    bwttext * t = bwttext_init("../japan.bwt", "../japan.idx", '\n', 1);
+    bwttext * t = bwttext_init("../tiny.cda.pwt", '[');
     int i;
     char fn[50];
     /*
@@ -30,7 +31,8 @@ void dump_occ_japan() {
      */
 
     for (i = 0; i < 256; i++) {
-        sprintf(fn, "../occtest/japan.1.%d.out", i);
+        printf("dump %d:\n", i);
+        sprintf(fn, "../occtest/tiny.1.%d.out", i);
         dump_occ(t, (unsigned char) i, fn);
     }
 
@@ -80,7 +82,7 @@ void dump_lpos(bwttext * t, unsigned char c, FILE * fout) {
 }
 
 void dump_lpos_japan() {
-    bwttext * t = bwttext_init("../5MB.bwt", "../5MB.idx", '\n', 1);
+    bwttext * t = bwttext_init("../5MB.bwt", '\n');
     //    int i;
 
     //        dump_lpos(t, (unsigned char) 32, stdout);
