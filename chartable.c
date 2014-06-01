@@ -31,10 +31,12 @@ int _cmp_char_by_code(const void * c1, const void * c2) {
     return (int) ((character *) c1)->c - ((character *) c2)->c;
 }
 
+/*
 int _cmp_char_by_freq(const void * c1, const void * c2) {
     // descending order
     return (int) ((*((character **) c2))->ss - (*((character **) c1))->ss);
 }
+*/
 
 /**
  * calculate how many chars can be stored in memory 
@@ -70,7 +72,7 @@ unsigned long compute_mem_maxchars(bwttext * t) {
 void chartable_compute_charfreq(bwttext * t) {
 
     character * ch;
-    character * chars[256];
+    //character * chars[256];
     int c, i, f1, f2;
     unsigned long cc, max;
 
@@ -89,6 +91,9 @@ void chartable_compute_charfreq(bwttext * t) {
             ch = t->char_hash[c] = &t->char_table[t->char_num++];
             ch->ss = 1; // freq=1
             ch->c = (unsigned char) c;
+            // since index file is removed, all are treated as frequent chars
+            ch->i = t->char_num - 1;
+            ch->isfreq = 1;
         } else {
             ch->ss++; // freq++
         }
@@ -107,6 +112,7 @@ void chartable_compute_charfreq(bwttext * t) {
 
     //take the most freq ones
 
+    /*
     for (i = 0; i < t->char_num; i++)
         chars[i] = &t->char_table[i];
 
@@ -120,6 +126,7 @@ void chartable_compute_charfreq(bwttext * t) {
         else
             chars[i]->i = f2++;
     }
+    */
 
 }
 
