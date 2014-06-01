@@ -17,7 +17,7 @@ int main(int argc, char ** argv) {
             return 1;
         }
 
-        pbwt(in, out, 0, 1, 1);
+        printf("%lu", pbwt(in, out, 0, 1, 1));
 
         fclose(out);
         fclose(in);
